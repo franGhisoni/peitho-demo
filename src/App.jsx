@@ -11,7 +11,6 @@ import {
   MessageCircle,
   PhoneCall,
   Plus,
-  RefreshCcw,
   Search,
   Send,
   Settings,
@@ -285,7 +284,17 @@ const storageKeys = {
   leads: 'peitho-react-demo-leads-v2',
   logo: 'peitho-react-demo-logo',
   agency: 'peitho-react-demo-agency',
+  botSchedule: 'peitho-react-demo-bot-schedule',
 }
+
+const defaultBotSchedule = {
+  enabled: true,
+  start: '18:00',
+  end: '09:00',
+  days: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
+}
+
+const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 function cn(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -316,6 +325,7 @@ function App() {
   const [selectedLeadId, setSelectedLeadId] = useState(leads[0]?.id)
   const [logo, setLogo] = useState(() => localStorage.getItem(storageKeys.logo) || '')
   const [agency, setAgency] = useState(() => localStorage.getItem(storageKeys.agency) || 'Peitho Realty')
+  const [botSchedule, setBotSchedule] = useState(() => loadJson(storageKeys.botSchedule, defaultBotSchedule))
   const [draft, setDraft] = useState('')
   const [query, setQuery] = useState('')
   const sidebarLogoInputRef = useRef(null)
@@ -355,6 +365,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem(storageKeys.agency, agency)
   }, [agency])
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.botSchedule, JSON.stringify(botSchedule))
+  }, [botSchedule])
 
   function updateLead(id, patch) {
     setLeads((current) => current.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead)))
@@ -402,12 +416,6 @@ function App() {
     const index = columns.findIndex((column) => column.id === lead.stage)
     const next = columns[Math.min(index + 1, columns.length - 1)]
     updateLead(lead.id, { stage: next.id })
-  }
-
-  function resetDemo() {
-    localStorage.removeItem(storageKeys.leads)
-    setLeads(initialLeads)
-    setSelectedLeadId(initialLeads[0].id)
   }
 
   return (
@@ -497,29 +505,6 @@ function App() {
                     : 'Operación comercial inmobiliaria'}
               </h2>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-bold"
-                type="button"
-                onClick={resetDemo}
-              >
-                <RefreshCcw size={16} />
-                Reset
-              </button>
-              <button
-                className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
-                type="button"
-                onClick={() => {
-                  const topLead = [...leads].sort((a, b) => b.score - a.score)[0]
-                  setSelectedLeadId(topLead.id)
-                  setSection('chats')
-                  setDraft(generateReply(topLead))
-                }}
-              >
-                <Bot size={16} />
-                Respuesta IA
-              </button>
-            </div>
           </header>
 
           {section === 'dashboard' && <Dashboard metrics={metrics} leads={leads} setSection={setSection} />}
@@ -554,7 +539,14 @@ function App() {
           )}
           {section === 'agenda' && <Agenda leads={leads} />}
           {section === 'brand' && (
-            <BrandSettings agency={agency} setAgency={setAgency} logo={logo} handleLogoUpload={handleLogoUpload} />
+            <BrandSettings
+              agency={agency}
+              setAgency={setAgency}
+              logo={logo}
+              handleLogoUpload={handleLogoUpload}
+              botSchedule={botSchedule}
+              setBotSchedule={setBotSchedule}
+            />
           )}
         </main>
       </div>
@@ -1115,7 +1107,17 @@ function Agenda({ leads }) {
   )
 }
 
-function BrandSettings({ agency, setAgency, logo, handleLogoUpload }) {
+function BrandSettings({ agency, setAgency, logo, handleLogoUpload, botSchedule, setBotSchedule }) {
+  function toggleDay(day) {
+    setBotSchedule((current) => {
+      const nextDays = current.days.includes(day)
+        ? current.days.filter((item) => item !== day)
+        : [...current.days, day]
+
+      return { ...current, days: nextDays }
+    })
+  }
+
   return (
     <section className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
@@ -1141,6 +1143,78 @@ function BrandSettings({ agency, setAgency, logo, handleLogoUpload }) {
             <input className="hidden" type="file" accept="image/*" onChange={handleLogoUpload} />
           </label>
         </div>
+
+        <div className="mt-6 border-t border-slate-200 pt-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase text-blue-600">Respuesta automática</p>
+              <h3 className="mt-1 text-2xl font-black">Horarios del bot</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Define cuándo la IA responde sin esperar a un asesor.
+              </p>
+            </div>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold">
+              <input
+                checked={botSchedule.enabled}
+                className="size-4 accent-blue-600"
+                type="checkbox"
+                onChange={(event) =>
+                  setBotSchedule((current) => ({ ...current, enabled: event.target.checked }))
+                }
+              />
+              Activo
+            </label>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2">
+              <span className="text-sm font-bold">Desde</span>
+              <input
+                className="h-11 rounded-lg border border-stone-300 px-3 outline-none focus:border-blue-500"
+                type="time"
+                value={botSchedule.start}
+                onChange={(event) =>
+                  setBotSchedule((current) => ({ ...current, start: event.target.value }))
+                }
+              />
+            </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-bold">Hasta</span>
+              <input
+                className="h-11 rounded-lg border border-stone-300 px-3 outline-none focus:border-blue-500"
+                type="time"
+                value={botSchedule.end}
+                onChange={(event) =>
+                  setBotSchedule((current) => ({ ...current, end: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-sm font-bold">Días activos</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {weekDays.map((day) => {
+                const active = botSchedule.days.includes(day)
+                return (
+                  <button
+                    className={cn(
+                      'h-9 rounded-lg border px-3 text-sm font-bold transition',
+                      active
+                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50',
+                    )}
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(day)}
+                  >
+                    {day}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       </div>
       <aside className="rounded-lg border border-slate-200 bg-white p-5 text-slate-950 shadow-sm">
         <p className="text-xs font-black uppercase text-blue-600">Preview</p>
@@ -1152,6 +1226,18 @@ function BrandSettings({ agency, setAgency, logo, handleLogoUpload }) {
             <h4 className="text-2xl font-black">{agency || 'Peitho Realty'}</h4>
             <p className="text-sm text-slate-500">CRM + agente comercial</p>
           </div>
+        </div>
+        <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
+          <div className="flex items-center gap-2 text-blue-700">
+            <Bot size={17} />
+            <p className="text-xs font-black uppercase">Bot automático</p>
+          </div>
+          <p className="mt-2 text-sm font-bold text-slate-900">
+            {botSchedule.enabled ? 'Activo' : 'Pausado'} de {botSchedule.start} a {botSchedule.end}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {botSchedule.days.length ? botSchedule.days.join(', ') : 'Sin días seleccionados'}
+          </p>
         </div>
       </aside>
     </section>
