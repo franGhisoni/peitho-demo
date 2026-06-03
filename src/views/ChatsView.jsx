@@ -110,7 +110,7 @@ function InboxFilters({ activeFilter, counts, onSelectFilter }) {
   ]
 
   return (
-    <aside className="min-h-[calc(100vh-210px)] min-w-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:w-52 xl:shrink-0">
+    <aside className="h-[calc(100vh-210px)] min-w-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:w-52 xl:shrink-0">
       <div className="mb-2 flex items-center gap-2 px-1 text-[11px] font-black uppercase tracking-wide text-slate-400">
         <Filter size={12} />
         Inbox
@@ -180,7 +180,7 @@ function FilterRow({ accent, active, count, icon: Icon, label, onClick, tone }) 
 
 function LeadList({ leads, selectedLead, onSelectLead }) {
   return (
-    <aside className="grid min-h-[calc(100vh-210px)] min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:w-72 xl:shrink-0">
+    <aside className="grid h-[calc(100vh-210px)] min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:w-72 xl:shrink-0">
       <div className="relative mb-3">
         <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
         <input className="h-10 w-full rounded-lg border border-stone-300 pl-9 pr-3 text-sm outline-none focus:border-blue-500" placeholder="Buscar lead" />
@@ -223,7 +223,7 @@ function LeadList({ leads, selectedLead, onSelectLead }) {
 
 function Conversation({ draft, lead, onDraftChange, onSendMessage, onSetDraft, onToggleOwner, replyForLead }) {
   return (
-    <section className="grid min-h-[calc(100vh-210px)] min-w-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border border-slate-200 bg-[#f1eadf] shadow-sm">
+    <section className="grid h-[calc(100vh-210px)] min-w-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border border-slate-200 bg-[#f1eadf] shadow-sm">
       <ConversationHeader lead={lead} onToggleOwner={onToggleOwner} />
       <div className="flex w-full min-w-0 flex-col gap-3 overflow-y-auto p-4">
         {lead.messages.map((message, index) => (
@@ -347,7 +347,7 @@ function InfoCell({ icon: Icon, label, value }) {
 
 function PropertyOfferList({ onSetDraft, properties }) {
   return (
-    <aside className="min-h-[calc(100vh-210px)] min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm xl:w-72 xl:shrink-0">
+    <aside className="h-[calc(100vh-210px)] min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm xl:w-72 xl:shrink-0">
       <p className="text-xs font-black uppercase text-blue-600">Propiedades para ofertar</p>
       <h3 className="mt-1 text-lg font-black">Segun este chat</h3>
       <div className="mt-4 grid gap-3 overflow-y-auto pr-1">
