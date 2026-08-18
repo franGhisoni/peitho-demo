@@ -13,3 +13,27 @@ body {
 #root {
   min-height: 100vh;
 }
+
+.theme-amber { --accent: #d97706; --accent-soft: #fff7ed; --accent-chat: #fef3c7; --accent-nav: rgba(245,158,11,.16); }
+.theme-violet { --accent: #7c3aed; --accent-soft: #f5f3ff; --accent-chat: #ede9fe; --accent-nav: rgba(139,92,246,.18); }
+.accent-bg, .accent-chart { background: var(--accent); }
+.accent-text { color: var(--accent); }
+.accent-soft { background: var(--accent-soft); color: var(--accent); }
+.accent-nav { background: var(--accent-nav); color: white; }
+.accent-border { border-color: var(--accent); }
+.accent-chat { background: var(--accent-chat); }
+.accent-button { background: var(--accent); color: white; transition: filter .15s ease, transform .15s ease; }
+.accent-button:hover { filter: brightness(.92); }
+.accent-button:active { transform: translateY(1px); }
+
+/* Grid items default to min-content width; these constraints keep every demo fluid on phones. */
+.vertical-demo main > section > div,
+.vertical-demo main > section > div > article,
+.vertical-demo main > section > div > section {
+  min-width: 0;
+}
+
+.vertical-demo main button.group {
+  width: 100%;
+  min-width: 0;
+}

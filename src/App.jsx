@@ -11,10 +11,11 @@ import { ChatsView } from './views/ChatsView'
 import { DashboardView } from './views/DashboardView'
 import { PipelineView } from './views/PipelineView'
 import { PropertiesView } from './views/PropertiesView'
+import { VerticalDemo } from './VerticalDemo'
 
 const defaultSection = 'pipeline'
 
-function App() {
+function OriginalDemo() {
   const [section, setSection] = useState(defaultSection)
   const [leads, setLeads] = useState(() => loadJson(storageKeys.leads, initialLeads))
   const [selectedLeadId, setSelectedLeadId] = useState(() => initialLeads[0]?.id)
@@ -216,6 +217,13 @@ function App() {
       </main>
     </div>
   )
+}
+
+function App() {
+  const vertical = window.location.pathname.split('/').filter(Boolean)[0]?.toLowerCase()
+  return vertical === 'relojes' || vertical === 'eventos'
+    ? <VerticalDemo type={vertical} />
+    : <OriginalDemo />
 }
 
 export default App
