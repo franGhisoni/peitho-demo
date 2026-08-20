@@ -12,6 +12,7 @@ import { DashboardView } from './views/DashboardView'
 import { PipelineView } from './views/PipelineView'
 import { PropertiesView } from './views/PropertiesView'
 import { VerticalDemo } from './VerticalDemo'
+import { GuardApp } from './components/GuardApp'
 
 const defaultSection = 'pipeline'
 
@@ -220,7 +221,11 @@ function OriginalDemo() {
 }
 
 function App() {
-  const vertical = window.location.pathname.split('/').filter(Boolean)[0]?.toLowerCase()
+  const pathParts = window.location.pathname.split('/').filter(Boolean)
+  const vertical = pathParts[0]?.toLowerCase()
+  if (vertical === 'eventos' && pathParts[1]?.toLowerCase() === 'app') {
+    return <GuardApp onExit={() => { window.location.href = '/eventos' }} />
+  }
   return vertical === 'relojes' || vertical === 'eventos'
     ? <VerticalDemo type={vertical} />
     : <OriginalDemo />

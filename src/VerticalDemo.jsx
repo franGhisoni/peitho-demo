@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import {
-  AlertTriangle, ArrowRight, BarChart3, Boxes, ChevronRight, CircleDollarSign,
+  AlertTriangle, ArrowRight, BarChart3, Boxes, ChevronRight, CircleDollarSign, ClipboardList,
   Clock3, CreditCard, Gauge, LayoutDashboard, Menu, MessageCircle, Search,
-  Send, Sparkles, Ticket, TrendingUp, Users, Watch, X,
+  Send, Sparkles, Ticket, TrendingUp, Users, Watch, X, WalletCards,
 } from 'lucide-react'
 import { verticalDemos } from './data/verticalDemoData'
 import { cn } from './lib/helpers'
+import { EventsOperations } from './components/EventsOperations'
 
 const iconMap = { users: Users, stock: Boxes, trend: TrendingUp, alert: AlertTriangle }
 
@@ -53,6 +54,8 @@ export function VerticalDemo({ type }) {
     ['chats', 'Conversaciones', MessageCircle],
     ['inventory', demo.itemLabel, type === 'relojes' ? Watch : Ticket],
     ['market', demo.marketLabel, type === 'relojes' ? BarChart3 : CreditCard],
+    ...(type === 'eventos' ? [['operations', 'Operación por evento', ClipboardList]] : []),
+    ...(type === 'relojes' ? [['finance', 'Finanzas', WalletCards]] : []),
   ]
 
   return (
@@ -79,6 +82,8 @@ export function VerticalDemo({ type }) {
           {section === 'chats' && <Chats demo={demo} draft={draft} leads={leads} selectedLead={selectedLead} onDraft={setDraft} onSelect={setSelectedId} onSend={sendMessage} />}
           {section === 'inventory' && <Inventory demo={demo} items={filteredItems} query={query} onQuery={setQuery} />}
           {section === 'market' && (type === 'relojes' ? <WatchMarket demo={demo} /> : <Payments demo={demo} leads={leads} />)}
+          {section === 'operations' && type === 'eventos' && <EventsOperations demo={demo} leads={leads} />}
+          {section === 'finance' && type === 'relojes' && <WatchFinance demo={demo} />}
         </main>
       </div>
     </div>
@@ -103,6 +108,7 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
           <p className="mt-2 text-sm font-bold leading-5">Responde consultas, califica intención y mantiene cada oportunidad en movimiento.</p>
           <div className="mt-4 flex items-center justify-between text-xs text-slate-400"><span>Estado</span><span className="flex items-center gap-1 font-bold text-emerald-400"><i className="size-2 rounded-full bg-emerald-400" />Activo</span></div>
         </div>
+        {demo.key === 'eventos' && <a href="/eventos/app" className="mt-4 rounded-xl bg-violet-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-violet-700">Abrir app de control de acceso</a>}
         <a href="/" className="mt-4 text-center text-xs font-bold text-slate-500 hover:text-white">← Volver a demo inmobiliaria</a>
       </aside>
     </>
@@ -175,6 +181,32 @@ function PriceLineChart({ compact = false, index = 0 }) {
     <polyline points={points} fill="none" stroke="var(--accent)" strokeWidth={compact?3:3.5} strokeLinecap="round" strokeLinejoin="round" />
     <circle cx={width} cy={points.split(' ').at(-1).split(',')[1]} r={compact?4:5} fill="white" stroke="var(--accent)" strokeWidth="3" />
   </svg>
+}
+
+function WatchFinance({ demo }) {
+  const [selectedSale, setSelectedSale] = useState(null)
+  const finance = demo.finance
+  return <section className="mt-7 grid gap-5">
+    <div className="rounded-2xl bg-[#101828] p-6 text-white">
+      <p className="accent-text text-xs font-black uppercase">Gestión financiera</p>
+      <h2 className="mt-2 text-2xl font-black">Ventas, pagos y rentabilidad del negocio</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Seguí cada operación desde la reserva hasta el cobro, con margen real por reloj y rendimiento de cada agente.</p>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{finance.summary.map((card) => <FinanceMetric key={card.label} icon={card.icon === 'sales' ? TrendingUp : card.icon === 'pending' ? Clock3 : card.icon === 'cost' ? CreditCard : CircleDollarSign} label={card.label} value={card.value} detail={card.detail} />)}</div>
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.6fr)]">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5"><div><p className="accent-text text-xs font-black uppercase">Historial de ventas</p><h3 className="mt-1 text-xl font-black">Operaciones recientes</h3></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">{finance.sales.length} operaciones</span></div>
+        <div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-sm"><thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400"><tr><th className="p-4">Fecha / comprador</th><th className="p-4">Reloj</th><th className="p-4">Importe</th><th className="p-4">Pago</th><th className="p-4">Agente</th><th className="p-4">Acción</th></tr></thead><tbody>{finance.sales.map((sale) => <tr key={sale.id} className="border-t border-slate-100"><td className="p-4"><strong>{sale.date}</strong><span className="block text-xs text-slate-400">{sale.buyer}</span></td><td className="p-4"><strong className="block">{sale.item}</strong><span className="text-xs text-slate-400">{sale.reference}</span></td><td className="p-4"><strong>{sale.amount}</strong><span className="block text-xs text-emerald-600">Neto {sale.net}</span></td><td className="p-4"><span className={cn('rounded-full px-2 py-1 text-[11px] font-black', sale.status === 'Acreditado' ? 'bg-emerald-50 text-emerald-700' : sale.status === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600')}>{sale.status}</span><span className="mt-1 block text-xs text-slate-400">{sale.method}</span></td><td className="p-4 font-semibold">{sale.agent}</td><td className="p-4"><button className="accent-text whitespace-nowrap text-xs font-black" onClick={() => setSelectedSale(sale)}>{selectedSale?.id === sale.id ? 'Seleccionado' : 'Ver detalle'} <ChevronRight size={14} className="inline" /></button></td></tr>)}</tbody></table></div>
+        {selectedSale && <div className="border-t border-slate-200 bg-slate-50 p-5"><div className="flex items-start justify-between gap-3"><div><p className="accent-text text-[10px] font-black uppercase">Detalle de operación · {selectedSale.id}</p><h4 className="mt-1 text-lg font-black">{selectedSale.item} para {selectedSale.buyer}</h4></div><button className="text-xs font-black text-slate-400" onClick={() => setSelectedSale(null)}>Cerrar</button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><Info label="Adquisición" value={selectedSale.acquisition}/><Info label="Precio de venta" value={selectedSale.amount}/><Info label="Costos" value={selectedSale.costs}/><Info label="Margen neto" value={selectedSale.margin}/></div><div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><div><p className="text-xs font-black">Comprobante y liquidación</p><p className="mt-1 text-xs text-slate-500">{selectedSale.receipt}</p></div><button className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black hover:bg-slate-50">Ver comprobante</button></div></div>}
+      </section>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Pagos</p><h3 className="mt-1 text-xl font-black">Últimos movimientos</h3></div><WalletCards className="text-slate-300" size={19}/></div><div className="mt-5 grid gap-3">{finance.payments.map((payment) => <div key={payment.id} className="rounded-xl border border-slate-100 p-3"><div className="flex items-center justify-between gap-2"><strong className="text-sm">{payment.label}</strong><span className={cn('text-xs font-black', payment.status === 'Acreditado' ? 'text-emerald-600' : 'text-amber-600')}>{payment.status}</span></div><p className="mt-1 text-xs text-slate-500">{payment.detail}</p><div className="mt-2 flex justify-between text-xs"><span className="text-slate-400">{payment.date}</span><strong>{payment.amount}</strong></div></div>)}</div></section>
+    </div>
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Equipo comercial</p><h3 className="mt-1 text-xl font-black">Agentes de ventas</h3></div><span className="text-xs font-bold text-slate-400">Este mes</span></div><div className="mt-5 grid gap-3 md:grid-cols-3">{finance.agents.map((agent) => <article key={agent.name} className="rounded-xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">{agent.initials}</span><div><strong className="block text-sm">{agent.name}</strong><span className="text-xs text-slate-500">{agent.role}</span></div></div><div className="mt-4 grid grid-cols-2 gap-3"><Info label="Ventas cerradas" value={agent.sales}/><Info label="Facturado" value={agent.revenue}/><Info label="Conversión" value={agent.conversion}/><Info label="Comisión" value={agent.commission}/></div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="accent-bg h-full rounded-full" style={{ width: `${agent.progress}%` }}/></div><p className="mt-2 text-[10px] font-bold text-slate-400">{agent.progress}% del objetivo mensual</p></article>)}</div></section>
+  </section>
+}
+
+function FinanceMetric({ icon: Icon, label, value, detail }) {
+  return <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><span className="accent-soft grid size-10 place-items-center rounded-xl"><Icon size={19}/></span><TrendingUp size={16} className="text-emerald-500"/></div><p className="mt-4 text-sm font-bold text-slate-500">{label}</p><strong className="mt-1 block text-2xl font-black">{value}</strong><p className="mt-1 text-xs text-slate-400">{detail}</p></article>
 }
 
 function Payments({ demo, leads }) {

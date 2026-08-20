@@ -21,6 +21,30 @@ export const verticalDemos = {
       { label: 'Margen potencial', value: '18,4%', detail: 'Promedio del inventario', kind: 'trend' },
       { label: 'Alertas de precio', value: '6', detail: 'Mercado se movió >5%', kind: 'alert' },
     ],
+    finance: {
+      summary: [
+        { label: 'Ventas del mes', value: '12', detail: '+3 vs. mes anterior', icon: 'sales' },
+        { label: 'Facturado', value: 'USD 76.450', detail: 'USD 68.920 cobrado', icon: 'sales' },
+        { label: 'Costo de adquisición', value: 'USD 55.180', detail: '72,2% de lo facturado', icon: 'cost' },
+        { label: 'Margen neto', value: 'USD 13.740', detail: '18,0% después de costos', icon: 'profit' },
+      ],
+      sales: [
+        { id: 'sale-1048', date: '18 ago 2026', buyer: 'Federico Klein', item: 'Breitling Navitimer', reference: 'AB0139 · 2020', amount: 'USD 6.900', acquisition: 'USD 5.420', costs: 'USD 210', net: 'USD 1.270', margin: '18,4%', status: 'Acreditado', method: 'Transferencia USD', agent: 'Sofía Méndez', receipt: 'Comprobante de transferencia · federico-klein.pdf' },
+        { id: 'sale-1047', date: '17 ago 2026', buyer: 'Juan Pablo Díaz', item: 'Tudor Black Bay 58', reference: 'M79030N · 2023', amount: 'USD 500', acquisition: '—', costs: 'USD 0', net: 'USD 500', margin: 'Seña', status: 'Pendiente', method: 'Transferencia USD', agent: 'Martín Ríos', receipt: 'Comprobante de seña · juan-pablo-diaz.pdf' },
+        { id: 'sale-1046', date: '15 ago 2026', buyer: 'Carolina Suárez', item: 'Cartier Santos Medium', reference: 'WSSA0029 · 2022', amount: 'USD 6.750', acquisition: 'USD 5.780', costs: 'USD 185', net: 'USD 785', margin: '11,6%', status: 'Acreditado', method: 'Tarjeta + transferencia', agent: 'Sofía Méndez', receipt: 'Liquidación · carolina-suarez.pdf' },
+        { id: 'sale-1045', date: '12 ago 2026', buyer: 'Tomás Vera', item: 'Omega Speedmaster Moonwatch', reference: '310.30 · 2020', amount: 'USD 1.500 + permuta', acquisition: 'USD 5.700', costs: 'USD 120', net: 'USD 1.180', margin: 'En evaluación', status: 'En conciliación', method: 'Permuta + efectivo', agent: 'Martín Ríos', receipt: 'Valuación de permuta · tomas-vera.pdf' },
+      ],
+      payments: [
+        { id: 'pay-1', label: 'Transferencia recibida', detail: 'Federico Klein · Breitling Navitimer', amount: 'USD 6.900', date: 'Hoy · 10:42', status: 'Acreditado' },
+        { id: 'pay-2', label: 'Seña pendiente de conciliar', detail: 'Juan Pablo Díaz · Tudor BB58', amount: 'USD 500', date: 'Ayer · 18:08', status: 'Pendiente' },
+        { id: 'pay-3', label: 'Liquidación de tarjeta', detail: 'Carolina Suárez · Cartier Santos', amount: 'USD 2.700', date: '15 ago · 16:31', status: 'Acreditado' },
+      ],
+      agents: [
+        { name: 'Sofía Méndez', initials: 'SM', role: 'Senior · lujo clásico', sales: '7', revenue: 'USD 43.200', conversion: '31%', commission: 'USD 2.160', progress: 86 },
+        { name: 'Martín Ríos', initials: 'MR', role: 'Especialista · deportivos', sales: '5', revenue: 'USD 33.250', conversion: '24%', commission: 'USD 1.662', progress: 68 },
+        { name: 'Agente IA', initials: 'IA', role: 'Calificación y seguimiento', sales: '—', revenue: '18 oportunidades', conversion: '42%', commission: 'Asistidas', progress: 74 },
+      ],
+    },
     leads: [
       { id: 'w1', name: 'Nicolás Arce', stage: 'consulta', intent: 'Rolex Datejust 36', budget: 'USD 9.500', score: 94, lastContact: 'Hace 12 min', source: 'Instagram', owner: 'IA', itemId: 'datejust', tags: ['Compra inmediata', 'Con caja'], nextAction: 'Confirmar año, set completo y coordinar videollamada.', phone: '+54 9 11 6642-1028', payment: 'Transferencia USD', messages: [{from:'client',text:'Hola, ¿el Datejust azul sigue disponible? Busco uno full set.',time:'10:37'},{from:'agent',text:'Hola Nicolás. Sí, sigue disponible: es 2021 e incluye caja, tarjeta y service reciente.',time:'10:38'},{from:'client',text:'Perfecto. ¿Tuvo pulido? También quería saber si el brazalete tiene juego.',time:'10:40'},{from:'agent',text:'Tuvo un pulido muy leve y el brazalete está firme. Puedo enviarte un video macro y el informe de autenticidad.',time:'10:41'},{from:'client',text:'Dale. Si está como decís, puedo avanzar esta semana. ¿El precio tiene algo de margen?',time:'10:42'}] },
       { id: 'w2', name: 'Marina López', stage: 'calificado', intent: 'Cartier Santos Medium', budget: 'USD 7.000', score: 87, lastContact: 'Hace 1 h', source: 'Web', owner: 'IA', itemId: 'santos', tags: ['Primer lujo', 'Cuotas'], nextAction: 'Enviar simulación de pago y video del estado del brazalete.', phone: '+54 9 11 3921-4480', payment: 'Tarjeta + transferencia', messages: [{from:'client',text:'Quiero mi primer reloj de lujo. ¿Puedo pagar una parte con tarjeta?',time:'09:18'},{from:'agent',text:'Sí. Podés abonar hasta el 40% con tarjeta y el saldo por transferencia.',time:'09:20'},{from:'client',text:'Me interesa el Santos mediano. Tengo muñeca chica, ¿queda muy grande?',time:'09:24'},{from:'agent',text:'El Medium mide 35 mm y suele funcionar muy bien en muñecas chicas. Te preparo un video puesto y una simulación en 3 y 6 cuotas.',time:'09:26'}] },
