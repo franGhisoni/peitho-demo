@@ -16,6 +16,7 @@ body {
 
 .theme-amber { --accent: #d97706; --accent-soft: #fff7ed; --accent-chat: #fef3c7; --accent-nav: rgba(245,158,11,.16); }
 .theme-violet { --accent: #7c3aed; --accent-soft: #f5f3ff; --accent-chat: #ede9fe; --accent-nav: rgba(139,92,246,.18); }
+.theme-blue { --accent: #2563eb; --accent-soft: #eff6ff; --accent-chat: #dbeafe; --accent-nav: rgba(37,99,235,.18); }
 .accent-bg, .accent-chart { background: var(--accent); }
 .accent-text { color: var(--accent); }
 .accent-soft { background: var(--accent-soft); color: var(--accent); }

@@ -226,7 +226,7 @@ function App() {
   if (vertical === 'eventos' && pathParts[1]?.toLowerCase() === 'app') {
     return <GuardApp onExit={() => { window.location.href = '/eventos' }} />
   }
-  return vertical === 'relojes' || vertical === 'eventos'
+  return vertical === 'relojes' || vertical === 'eventos' || vertical === 'autos'
     ? <VerticalDemo type={vertical} />
     : <OriginalDemo />
 }

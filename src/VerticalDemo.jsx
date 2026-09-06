@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react'
 import {
-  AlertTriangle, ArrowRight, BarChart3, Boxes, ChevronRight, CircleDollarSign, ClipboardList,
-  Clock3, CreditCard, Gauge, LayoutDashboard, Menu, MessageCircle, Search,
-  Send, Sparkles, Ticket, TrendingUp, Users, Watch, X, WalletCards,
+  AlertTriangle, ArrowRight, BarChart3, Boxes, CalendarCheck, Car, ChevronRight, CircleDollarSign,
+  ClipboardList, Clock3, CreditCard, Gauge, KeyRound, LayoutDashboard, Menu, MessageCircle,
+  Search, Send, ShieldCheck, Sparkles, Ticket, TrendingUp, Users, Watch, X, WalletCards,
+  Calculator, Wrench,
 } from 'lucide-react'
 import { verticalDemos } from './data/verticalDemoData'
 import { cn } from './lib/helpers'
 import { EventsOperations } from './components/EventsOperations'
+import { AutoCustomerProfile } from './components/AutoCustomerProfile'
+import { AutoFinanceSimulator } from './components/AutoFinanceSimulator'
+import { AutoTestDriveView } from './components/AutoTestDriveView'
 
-const iconMap = { users: Users, stock: Boxes, trend: TrendingUp, alert: AlertTriangle }
+const iconMap = { users: Users, stock: Boxes, trend: TrendingUp, alert: AlertTriangle, car: Car }
 
 export function VerticalDemo({ type }) {
   const demo = verticalDemos[type]
@@ -52,10 +56,19 @@ export function VerticalDemo({ type }) {
     ['dashboard', 'Dashboard', LayoutDashboard],
     ['pipeline', demo.pipelineLabel, Users],
     ['chats', 'Conversaciones', MessageCircle],
-    ['inventory', demo.itemLabel, type === 'relojes' ? Watch : Ticket],
-    ['market', demo.marketLabel, type === 'relojes' ? BarChart3 : CreditCard],
-    ...(type === 'eventos' ? [['operations', 'Operación por evento', ClipboardList]] : []),
-    ...(type === 'relojes' ? [['finance', 'Finanzas', WalletCards]] : []),
+    ['inventory', demo.itemLabel, type === 'relojes' ? Watch : type === 'autos' ? Car : Ticket],
+    ...(type === 'eventos' ? [
+      ['market', demo.marketLabel, CreditCard],
+      ['operations', 'Operación por evento', ClipboardList],
+    ] : []),
+    ...(type === 'relojes' ? [
+      ['market', demo.marketLabel, BarChart3],
+      ['finance', 'Finanzas', WalletCards],
+    ] : []),
+    ...(type === 'autos' ? [
+      ['testdrive', 'Test Drive & Peritaje', CalendarCheck],
+      ['finance', 'Finanzas & Ventas', WalletCards],
+    ] : []),
   ]
 
   return (
@@ -83,7 +96,8 @@ export function VerticalDemo({ type }) {
           {section === 'inventory' && <Inventory demo={demo} items={filteredItems} query={query} onQuery={setQuery} />}
           {section === 'market' && (type === 'relojes' ? <WatchMarket demo={demo} /> : <Payments demo={demo} leads={leads} />)}
           {section === 'operations' && type === 'eventos' && <EventsOperations demo={demo} leads={leads} />}
-          {section === 'finance' && type === 'relojes' && <WatchFinance demo={demo} />}
+          {section === 'finance' && <BusinessFinance demo={demo} />}
+          {section === 'testdrive' && type === 'autos' && <AutoTestDriveView demo={demo} leads={leads} onOpenChat={openChat} />}
         </main>
       </div>
     </div>
@@ -97,7 +111,7 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
       <aside className={cn('fixed inset-y-0 left-0 z-40 flex w-[258px] flex-col border-r border-slate-200 bg-[#101828] p-5 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0', mobileMenu ? 'translate-x-0' : '-translate-x-full')}>
         <button className="absolute right-3 top-3 text-slate-400 lg:hidden" onClick={onClose}><X /></button>
         <div className="flex items-center gap-3">
-          <div className="accent-bg grid size-11 place-items-center rounded-xl text-white shadow-lg">{demo.key === 'relojes' ? <Watch /> : <Ticket />}</div>
+          <div className="accent-bg grid size-11 place-items-center rounded-xl text-white shadow-lg">{demo.key === 'relojes' ? <Watch /> : demo.key === 'autos' ? <Car /> : <Ticket />}</div>
           <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">Demo vertical</p><h2 className="font-black">{demo.brand}</h2></div>
         </div>
         <nav className="mt-8 grid gap-1.5">
@@ -109,7 +123,17 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
           <div className="mt-4 flex items-center justify-between text-xs text-slate-400"><span>Estado</span><span className="flex items-center gap-1 font-bold text-emerald-400"><i className="size-2 rounded-full bg-emerald-400" />Activo</span></div>
         </div>
         {demo.key === 'eventos' && <a href="/eventos/app" className="mt-4 rounded-xl bg-violet-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-violet-700">Abrir app de control de acceso</a>}
-        <a href="/" className="mt-4 text-center text-xs font-bold text-slate-500 hover:text-white">← Volver a demo inmobiliaria</a>
+        {demo.key === 'autos' && <button onClick={() => onNavigate('testdrive')} className="mt-4 rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700">Ver agenda de Test Drive</button>}
+
+        <div className="mt-4 border-t border-white/10 pt-3 text-center">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Otras demos verticales</p>
+          <div className="grid grid-cols-2 gap-1.5 text-[11px] font-bold">
+            <a href="/" className="rounded-lg bg-white/5 py-1.5 text-slate-300 transition hover:bg-white/15 hover:text-white">Inmobiliaria</a>
+            <a href="/autos" className={cn("rounded-lg py-1.5 transition", demo.key === 'autos' ? "bg-blue-600 text-white shadow-sm" : "bg-white/5 text-slate-300 hover:bg-white/15 hover:text-white")}>Autos</a>
+            <a href="/relojes" className={cn("rounded-lg py-1.5 transition", demo.key === 'relojes' ? "bg-amber-600 text-white shadow-sm" : "bg-white/5 text-slate-300 hover:bg-white/15 hover:text-white")}>Relojes</a>
+            <a href="/eventos" className={cn("rounded-lg py-1.5 transition", demo.key === 'eventos' ? "bg-violet-600 text-white shadow-sm" : "bg-white/5 text-slate-300 hover:bg-white/15 hover:text-white")}>Eventos</a>
+          </div>
+        </div>
       </aside>
     </>
   )
@@ -120,14 +144,14 @@ function Dashboard({ demo, leads, onNavigate, onOpenChat }) {
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{demo.dashboardCards.map((card) => { const Icon = iconMap[card.kind]; return <article key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-slate-500">{card.label}</p><strong className="mt-2 block text-3xl font-black tracking-tight">{card.value}</strong></div><span className="accent-soft grid size-10 place-items-center rounded-xl"><Icon size={19} /></span></div><p className="mt-4 text-xs font-semibold text-slate-500">{card.detail}</p></article> })}</div>
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(330px,.6fr)]">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><div><p className="accent-text text-xs font-black uppercase">Prioridad IA</p><h2 className="mt-1 text-xl font-black">Oportunidades que requieren acción</h2></div><button className="accent-button hidden rounded-xl px-3 py-2 text-xs font-black sm:block" onClick={() => onNavigate('pipeline')}>Ver pipeline</button></div><div className="mt-5 grid gap-2">{leads.slice().sort((a,b)=>b.score-a.score).slice(0,4).map(lead=><button key={lead.id} onClick={()=>onOpenChat(lead)} className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3 text-left hover:border-slate-300 hover:bg-slate-50"><span className="accent-soft grid size-10 shrink-0 place-items-center rounded-full text-xs font-black">{lead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{lead.name}</strong><span className="block truncate text-xs text-slate-500">{lead.nextAction}</span></span><span className="text-sm font-black text-emerald-600">{lead.score}</span><ChevronRight size={16} className="text-slate-300 group-hover:text-slate-700" /></button>)}</div></section>
-      <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Actividad en vivo</p><h2 className="mt-1 text-xl font-black">Últimos movimientos</h2></div><span className="accent-soft grid size-10 place-items-center rounded-xl"><Clock3 size={18} /></span></div><div className="mt-5 grid gap-4">{leads.slice(0,3).map((lead,index)=><div className="relative flex gap-3" key={lead.id}><span className="accent-bg mt-1.5 size-2 shrink-0 rounded-full" /><div className="min-w-0"><p className="text-sm font-bold">{demo.key==='relojes' ? ['Stock confirmado','Precio comparado','Seguimiento programado'][index] : ['Cupo confirmado','Checkout detectado','Recordatorio programado'][index]}</p><p className="mt-0.5 truncate text-xs text-slate-500">{lead.name} · {lead.intent}</p><span className="mt-1 block text-[10px] font-bold text-slate-400">{lead.lastContact}</span></div></div>)}</div><button className="accent-text mt-5 text-xs font-black" onClick={() => onNavigate('chats')}>Ver conversaciones <ChevronRight size={14} className="inline" /></button></section>
+      <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Actividad en vivo</p><h2 className="mt-1 text-xl font-black">Últimos movimientos</h2></div><span className="accent-soft grid size-10 place-items-center rounded-xl"><Clock3 size={18} /></span></div><div className="mt-5 grid gap-4">{leads.slice(0,3).map((lead,index)=><div className="relative flex gap-3" key={lead.id}><span className="accent-bg mt-1.5 size-2 shrink-0 rounded-full" /><div className="min-w-0"><p className="text-sm font-bold">{demo.key==='relojes' ? ['Stock confirmado','Precio comparado','Seguimiento programado'][index] : demo.key==='autos' ? ['Test Drive coordinado', 'Ficha 360° completada', 'Seña registrada en salón'][index] : ['Cupo confirmado','Checkout detectado','Recordatorio programado'][index]}</p><p className="mt-0.5 truncate text-xs text-slate-500">{lead.name} · {lead.intent}</p><span className="mt-1 block text-[10px] font-bold text-slate-400">{lead.lastContact}</span></div></div>)}</div><button className="accent-text mt-5 text-xs font-black" onClick={() => onNavigate('chats')}>Ver conversaciones <ChevronRight size={14} className="inline" /></button></section>
     </div>
     <SmartAlerts demo={demo} />
   </section>
 }
 
 function SmartAlerts({ demo }) {
-  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-xl"><AlertTriangle size={18}/></span><div><p className="accent-text text-xs font-black uppercase">Alertas inteligentes</p><h2 className="text-xl font-black">Decisiones sugeridas</h2></div></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{demo.items.map(item=><article className="rounded-xl border border-slate-100 bg-slate-50 p-3" key={item.id}><div className="flex items-start justify-between gap-2"><strong className="text-sm">{item.title}</strong><span className="accent-bg mt-1 size-2 shrink-0 rounded-full"/></div><p className="mt-2 text-xs leading-5 text-slate-600">{item.alert}</p></article>)}</div></section>
+  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-xl"><AlertTriangle size={18}/></span><div><p className="accent-text text-xs font-black uppercase">Alertas inteligentes</p><h2 className="text-xl font-black">{demo.key === 'autos' ? 'Decisiones de salón y rotación de stock' : 'Decisiones sugeridas'}</h2></div></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{demo.items.map(item=><article className="rounded-xl border border-slate-100 bg-slate-50 p-3" key={item.id}><div className="flex items-start justify-between gap-2"><strong className="text-sm">{item.title}</strong><span className="accent-bg mt-1 size-2 shrink-0 rounded-full"/></div><p className="mt-2 text-xs leading-5 text-slate-600">{item.alert}</p></article>)}</div></section>
 }
 
 function Pipeline({ demo, leads, selectedId, onAdvance, onOpenChat, onSelect }) {
@@ -137,22 +161,178 @@ function Pipeline({ demo, leads, selectedId, onAdvance, onOpenChat, onSelect }) 
 
 function Chats({ demo, draft, leads, selectedLead, onDraft, onSelect, onSend }) {
   const related = demo.items.find(item=>item.id===selectedLead.itemId)
-  return <section className="mt-7 grid min-h-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[270px_minmax(0,1fr)_300px]">
+  const [chatTab, setChatTab] = useState('profile') // 'profile', 'vehicle', 'finance'
+
+  return <section className="mt-7 grid min-h-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[270px_minmax(0,1fr)_340px]">
     <aside className="border-b border-slate-200 p-3 lg:border-b-0 lg:border-r"><div className="relative mb-3"><Search size={15} className="absolute left-3 top-3 text-slate-400"/><input className="h-10 w-full rounded-xl bg-slate-100 pl-9 pr-3 text-sm outline-none" placeholder="Buscar conversación"/></div><div className="flex gap-2 overflow-x-auto lg:grid">{leads.map(lead=><button key={lead.id} onClick={()=>onSelect(lead.id)} className={cn('min-w-[220px] rounded-xl border p-3 text-left lg:min-w-0',lead.id===selectedLead.id?'accent-soft accent-border':'border-transparent hover:bg-slate-50')}><div className="flex justify-between gap-2"><strong className="truncate text-sm">{lead.name}</strong><span className="shrink-0 text-[10px] text-slate-400">{lead.lastContact}</span></div><p className="mt-1 truncate text-xs text-slate-500">{lead.messages.at(-1)?.text}</p></button>)}</div></aside>
-    <div className="grid min-w-0 grid-rows-[auto_1fr_auto] bg-[#f8fafc]"><header className="border-b border-slate-200 bg-white p-4"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">{selectedLead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</span><div><strong className="block">{selectedLead.name}</strong><span className="text-xs text-slate-500">{selectedLead.source} · {selectedLead.phone}</span></div></div></header><div className="flex flex-col gap-3 overflow-y-auto p-4">{selectedLead.messages.map((m,i)=><div key={i} className={cn('max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-6 shadow-sm',m.from==='agent'?'accent-chat ml-auto':'mr-auto bg-white')}><p>{m.text}</p><span className="block text-right text-[10px] opacity-50">{m.time}</span></div>)}</div><footer className="border-t border-slate-200 bg-white p-3"><button onClick={()=>onDraft(demo.key==='relojes'?`Hola ${selectedLead.name.split(' ')[0]}, confirmé disponibilidad y preparé la mejor opción según el precio actual de mercado.`:`Hola ${selectedLead.name.split(' ')[0]}, confirmé que todavía hay lugar. Puedo reservarte el cupo y enviarte el link de pago.`)} className="mb-2 text-xs font-black accent-text"><Sparkles size={13} className="mr-1 inline"/>Sugerir respuesta</button><div className="flex gap-2"><input value={draft} onChange={e=>onDraft(e.target.value)} onKeyDown={e=>e.key==='Enter'&&onSend()} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-slate-400" placeholder="Escribí una respuesta..."/><button onClick={onSend} className="accent-button grid size-11 shrink-0 place-items-center rounded-xl"><Send size={17}/></button></div></footer></div>
-    <aside className="border-t border-slate-200 p-5 lg:border-l lg:border-t-0"><p className="accent-text text-xs font-black uppercase">Contexto comercial</p><h3 className="mt-1 text-lg font-black">{related?.title}</h3>{related&&<><img src={related.image} alt="" className="mt-4 h-36 w-full rounded-xl object-cover"/>{demo.key==='relojes'&&<div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3"><div className="mb-2 flex items-center justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Precio · 90 días</span><strong className={cn('text-xs',related.change.startsWith('-')?'text-rose-600':'text-emerald-600')}>{related.change}</strong></div><PriceLineChart compact index={demo.items.findIndex(item=>item.id===related.id)} /></div>}<div className="mt-4 grid grid-cols-2 gap-3 text-sm">{demo.key==='relojes'&&<><Info label="Adquisición" value={related.acquisition}/><Info label="Stock" value={related.stock}/><Info label="Consultas · 7 días" value={related.inquiries}/></>}<Info label={demo.key==='relojes'?'Precio publicado':'Precio'} value={related.price}/><Info label={demo.key==='relojes'?'Precio ideal':'Disponibilidad'} value={demo.key==='relojes'?related.ideal:related.stock}/>{demo.key==='relojes'&&<Info label="Margen ideal" value={related.margin}/>}<Info label="Estado del pago" value={selectedLead.payment}/><div className="col-span-2"><Info label="Próxima acción" value={selectedLead.nextAction}/></div></div><SimilarSuggestions demo={demo} related={related} onDraft={onDraft}/></>}</aside>
+    <div className="grid min-w-0 grid-rows-[auto_1fr_auto] bg-[#f8fafc]"><header className="border-b border-slate-200 bg-white p-4"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">{selectedLead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</span><div><strong className="block">{selectedLead.name}</strong><span className="text-xs text-slate-500">{selectedLead.source} · {selectedLead.phone}</span></div></div></header><div className="flex flex-col gap-3 overflow-y-auto p-4">{selectedLead.messages.map((m,i)=><div key={i} className={cn('max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-6 shadow-sm',m.from==='agent'?'accent-chat ml-auto':'mr-auto bg-white')}><p>{m.text}</p><span className="block text-right text-[10px] opacity-50">{m.time}</span></div>)}</div><footer className="border-t border-slate-200 bg-white p-3"><button onClick={()=>onDraft(demo.key==='relojes'?`Hola ${selectedLead.name.split(' ')[0]}, confirmé disponibilidad y preparé la mejor opción según el precio actual de mercado.`:demo.key==='autos'?`Hola ${selectedLead.name.split(' ')[0]}, tenemos la unidad disponible en salón para coordinar un Test Drive y podemos recibir tu auto actual para peritaje mecánico en rampa sin costo.`:`Hola ${selectedLead.name.split(' ')[0]}, confirmé que todavía hay lugar. Puedo reservarte el cupo y enviarte el link de pago.`)} className="mb-2 text-xs font-black accent-text"><Sparkles size={13} className="mr-1 inline"/>Sugerir respuesta</button><div className="flex gap-2"><input value={draft} onChange={e=>onDraft(e.target.value)} onKeyDown={e=>e.key==='Enter'&&onSend()} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-slate-400" placeholder="Escribí una respuesta..."/><button onClick={onSend} className="accent-button grid size-11 shrink-0 place-items-center rounded-xl"><Send size={17}/></button></div></footer></div>
+    
+    <aside className="border-t border-slate-200 p-4 lg:border-l lg:border-t-0 overflow-y-auto max-h-[760px]">
+      {demo.key === 'autos' ? (
+        <div>
+          <div className="mb-4 flex rounded-xl border border-slate-200 bg-slate-100 p-1 text-xs font-black">
+            <button
+              onClick={() => setChatTab('profile')}
+              className={cn(
+                'flex-1 rounded-lg py-1.5 transition flex items-center justify-center gap-1',
+                chatTab === 'profile' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              )}
+            >
+              <ShieldCheck size={13} />
+              Perfil 360°
+            </button>
+            <button
+              onClick={() => setChatTab('vehicle')}
+              className={cn(
+                'flex-1 rounded-lg py-1.5 transition flex items-center justify-center gap-1',
+                chatTab === 'vehicle' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              )}
+            >
+              <Car size={13} />
+              Vehículo
+            </button>
+            <button
+              onClick={() => setChatTab('finance')}
+              className={cn(
+                'flex-1 rounded-lg py-1.5 transition flex items-center justify-center gap-1',
+                chatTab === 'finance' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              )}
+            >
+              <Calculator size={13} />
+              Cuotas
+            </button>
+          </div>
+
+          {chatTab === 'profile' && (
+            <AutoCustomerProfile lead={selectedLead} item={related} onInsertBrief={onDraft} />
+          )}
+
+          {chatTab === 'finance' && (
+            <AutoFinanceSimulator vehicle={related} onApplyDraft={onDraft} />
+          )}
+
+          {chatTab === 'vehicle' && related && (
+            <div>
+              <p className="accent-text text-xs font-black uppercase">Ficha técnica del vehículo</p>
+              <h3 className="mt-1 text-lg font-black">{related.title}</h3>
+              <img src={related.image} alt="" className="mt-3 h-36 w-full rounded-xl object-cover" />
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-blue-50 p-2.5">
+                <span className="text-xs font-black text-blue-900">{related.price}</span>
+                <span className="rounded-full bg-blue-200/70 px-2 py-0.5 text-[10px] font-black text-blue-800">
+                  {related.status}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <Info label="Combustible" value={related.specs?.fuel} />
+                <Info label="Transmisión" value={related.specs?.transmission} />
+                <Info label="Tracción" value={related.specs?.traction} />
+                <Info label="Garantía" value={related.specs?.warranty} />
+                <Info label="Consultas · 7d" value={related.inquiries} />
+                <Info label="Días en salón" value={related.inventoryDays} />
+              </div>
+              <div className="mt-3 rounded-xl border border-amber-200/70 bg-amber-50 p-3">
+                <p className="text-[10px] font-black uppercase text-amber-900">Alerta de salón</p>
+                <p className="mt-1 text-xs text-slate-700">{related.alert}</p>
+              </div>
+              <SimilarSuggestions demo={demo} related={related} onDraft={onDraft} />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <p className="accent-text text-xs font-black uppercase">Contexto comercial</p>
+          <h3 className="mt-1 text-lg font-black">{related?.title}</h3>
+          {related && <>
+            <img src={related.image} alt="" className="mt-4 h-36 w-full rounded-xl object-cover"/>
+            {demo.key==='relojes'&&<div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3"><div className="mb-2 flex items-center justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Precio · 90 días</span><strong className={cn('text-xs',related.change.startsWith('-')?'text-rose-600':'text-emerald-600')}>{related.change}</strong></div><PriceLineChart compact index={demo.items.findIndex(item=>item.id===related.id)} /></div>}
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              {demo.key==='relojes'&&<><Info label="Adquisición" value={related.acquisition}/><Info label="Stock" value={related.stock}/><Info label="Consultas · 7 días" value={related.inquiries}/></>}
+              <Info label={demo.key==='relojes'?'Precio publicado':'Precio'} value={related.price}/>
+              <Info label={demo.key==='relojes'?'Precio ideal':'Disponibilidad'} value={demo.key==='relojes'?related.ideal:related.stock}/>
+              {demo.key==='relojes'&&<Info label="Margen ideal" value={related.margin}/>}
+              <Info label="Estado del pago" value={selectedLead.payment}/>
+              <div className="col-span-2"><Info label="Próxima acción" value={selectedLead.nextAction}/></div>
+            </div>
+            <SimilarSuggestions demo={demo} related={related} onDraft={onDraft}/>
+          </>}
+        </div>
+      )}
+    </aside>
   </section>
 }
 
 function SimilarSuggestions({ demo, related, onDraft }) {
   const suggestions = demo.items.filter(item=>item.id!==related.id).slice(0,2)
-  return <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{demo.key==='relojes'?'Relojes similares':'Eventos similares'}</p><div className="mt-2 grid gap-2">{suggestions.map(item=><button className="flex items-center gap-2 rounded-xl border border-slate-100 p-2 text-left hover:bg-slate-50" key={item.id} onClick={()=>onDraft(demo.key==='relojes'?`También puedo ofrecerte ${item.title} a ${item.price}; es una alternativa similar que tenemos disponible.`:`También puede interesarte ${item.title}, con entradas ${item.price} y ${item.stock} disponibles.`)}><img src={item.image} alt="" className="size-10 shrink-0 rounded-lg object-cover"/><span className="min-w-0 flex-1"><strong className="block truncate text-xs">{item.title}</strong><span className="block truncate text-[10px] text-slate-500">{item.price} · {item.stock}</span></span><ChevronRight size={14} className="shrink-0 text-slate-300"/></button>)}</div></div>
+  return <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{demo.key==='relojes'?'Relojes similares':demo.key==='autos'?'Alternativas de stock':'Eventos similares'}</p><div className="mt-2 grid gap-2">{suggestions.map(item=><button className="flex items-center gap-2 rounded-xl border border-slate-100 p-2 text-left hover:bg-slate-50" key={item.id} onClick={()=>onDraft(demo.key==='relojes'?`También puedo ofrecerte ${item.title} a ${item.price}; es una alternativa similar que tenemos disponible.`:demo.key==='autos'?`También tenemos disponible ${item.title} a ${item.price} en salón con entrega inmediata.`:`También puede interesarte ${item.title}, con entradas ${item.price} y ${item.stock} disponibles.`)}><img src={item.image} alt="" className="size-10 shrink-0 rounded-lg object-cover"/><span className="min-w-0 flex-1"><strong className="block truncate text-xs">{item.title}</strong><span className="block truncate text-[10px] text-slate-500">{item.price} · {item.stock}</span></span><ChevronRight size={14} className="shrink-0 text-slate-300"/></button>)}</div></div>
 }
 
 function Inventory({ demo, items, query, onQuery }) {
   return <section className="mt-7 grid gap-5">
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between"><div><p className="accent-text text-xs font-black uppercase">Inventario conectado</p><h2 className="mt-1 text-xl font-black">{demo.key==='relojes'?'Stock, costo y posición de mercado':'Ventas y disponibilidad por evento'}</h2></div><div className="relative md:w-80"><Search className="absolute left-3 top-3.5 text-slate-400" size={16}/><input value={query} onChange={e=>onQuery(e.target.value)} className="h-11 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400" placeholder={demo.key==='relojes'?'Marca, referencia, estado...':'Evento, fecha, estado...'}/></div></div>
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{items.map(item=><article key={item.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="relative h-48"><img src={item.image} alt={item.title} className="h-full w-full object-cover"/><span className="absolute left-3 top-3 rounded-full bg-white/95 px-2 py-1 text-xs font-black shadow">{item.status}</span></div><div className="p-4"><p className="text-xs font-bold text-slate-500">{item.ref}</p><h3 className="mt-1 font-black">{item.title}</h3><p className="mt-3 text-lg font-black">{item.price}</p><div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">{demo.key==='relojes'?<><Info label="Adquisición" value={item.acquisition}/><Info label="Precio mínimo" value={item.minPrice}/><Info label="Stock" value={item.stock}/><Info label="Días en inventario" value={item.inventoryDays}/><Info label="Consultas · 7 días" value={item.inquiries}/><Info label="Margen ideal" value={item.margin}/></>:<><Info label="Total vendido" value={item.sold}/><Info label="Total facturado" value={item.revenue}/><Info label="Espacio disponible" value={item.stock}/><Info label="Ocupación" value={item.change}/></>}</div><div className="mt-4 rounded-xl bg-amber-50 p-3"><p className="text-[10px] font-black uppercase text-amber-700">Alerta inteligente</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.alert}</p></div></div></article>)}</div>
+    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div>
+        <p className="accent-text text-xs font-black uppercase">Inventario conectado</p>
+        <h2 className="mt-1 text-xl font-black">{demo.key==='relojes'?'Stock, costo y posición de mercado':demo.key==='autos'?'Salón, stock aging y fichas técnicas':'Ventas y disponibilidad por evento'}</h2>
+      </div>
+      <div className="relative md:w-80">
+        <Search className="absolute left-3 top-3.5 text-slate-400" size={16}/>
+        <input value={query} onChange={e=>onQuery(e.target.value)} className="h-11 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400" placeholder={demo.key==='relojes'?'Marca, referencia, estado...':demo.key==='autos'?'Modelo, año, motor, caja...':'Evento, fecha, estado...'}/>
+      </div>
+    </div>
+
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {items.map(item=><article key={item.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between">
+        <div>
+          <div className="relative h-48">
+            <img src={item.image} alt={item.title} className="h-full w-full object-cover"/>
+            <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-black shadow">{item.status}</span>
+            {demo.key==='autos' && (
+              <span className={cn('absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-black shadow', parseInt(item.inventoryDays)>45||item.status.includes('Aging')?'bg-rose-600 text-white':'bg-emerald-600 text-white')}>
+                Aging: {item.inventoryDays}
+              </span>
+            )}
+          </div>
+          <div className="p-4">
+            <p className="text-xs font-bold text-slate-500">{item.ref}</p>
+            <h3 className="mt-1 font-black text-lg">{item.title}</h3>
+            <p className="mt-2 text-xl font-black text-slate-900">{item.price}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+              {demo.key==='relojes' ? (
+                <>
+                  <Info label="Adquisición" value={item.acquisition}/>
+                  <Info label="Precio mínimo" value={item.minPrice}/>
+                  <Info label="Stock" value={item.stock}/>
+                  <Info label="Días en inventario" value={item.inventoryDays}/>
+                  <Info label="Consultas · 7 días" value={item.inquiries}/>
+                  <Info label="Margen ideal" value={item.margin}/>
+                </>
+              ) : demo.key==='autos' ? (
+                <>
+                  <Info label="Combustible" value={item.specs?.fuel}/>
+                  <Info label="Transmisión" value={item.specs?.transmission}/>
+                  <Info label="Tracción" value={item.specs?.traction}/>
+                  <Info label="Garantía" value={item.specs?.warranty}/>
+                  <Info label="Consultas · 7d" value={item.inquiries}/>
+                  <Info label="Margen est." value={item.margin}/>
+                </>
+              ) : (
+                <>
+                  <Info label="Total vendido" value={item.sold}/>
+                  <Info label="Total facturado" value={item.revenue}/>
+                  <Info label="Espacio disponible" value={item.stock}/>
+                  <Info label="Ocupación" value={item.change}/>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="p-4 pt-0">
+          <div className="rounded-xl bg-amber-50 p-3">
+            <p className="text-[10px] font-black uppercase text-amber-700">Alerta inteligente</p>
+            <p className="mt-1 text-xs leading-5 text-slate-600">{item.alert}</p>
+          </div>
+        </div>
+      </article>)}
+    </div>
   </section>
 }
 
@@ -183,23 +363,86 @@ function PriceLineChart({ compact = false, index = 0 }) {
   </svg>
 }
 
-function WatchFinance({ demo }) {
+function BusinessFinance({ demo }) {
   const [selectedSale, setSelectedSale] = useState(null)
   const finance = demo.finance
+  if (!finance) return null
+
   return <section className="mt-7 grid gap-5">
     <div className="rounded-2xl bg-[#101828] p-6 text-white">
       <p className="accent-text text-xs font-black uppercase">Gestión financiera</p>
-      <h2 className="mt-2 text-2xl font-black">Ventas, pagos y rentabilidad del negocio</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Seguí cada operación desde la reserva hasta el cobro, con margen real por reloj y rendimiento de cada agente.</p>
+      <h2 className="mt-2 text-2xl font-black">
+        {demo.key === 'autos' ? 'Ventas de salón, créditos prendarios y rentabilidad' : 'Ventas, pagos y rentabilidad del negocio'}
+      </h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+        {demo.key === 'autos'
+          ? 'Seguí cada boleto de compraventa, estado de scoring bancario prendario y rendimiento de los asesores de salón.'
+          : 'Seguí cada operación desde la reserva hasta el cobro, con margen real por unidad y rendimiento de cada agente.'}
+      </p>
     </div>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{finance.summary.map((card) => <FinanceMetric key={card.label} icon={card.icon === 'sales' ? TrendingUp : card.icon === 'pending' ? Clock3 : card.icon === 'cost' ? CreditCard : CircleDollarSign} label={card.label} value={card.value} detail={card.detail} />)}</div>
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.6fr)]">
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5"><div><p className="accent-text text-xs font-black uppercase">Historial de ventas</p><h3 className="mt-1 text-xl font-black">Operaciones recientes</h3></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">{finance.sales.length} operaciones</span></div>
-        <div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-sm"><thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400"><tr><th className="p-4">Fecha / comprador</th><th className="p-4">Reloj</th><th className="p-4">Importe</th><th className="p-4">Pago</th><th className="p-4">Agente</th><th className="p-4">Acción</th></tr></thead><tbody>{finance.sales.map((sale) => <tr key={sale.id} className="border-t border-slate-100"><td className="p-4"><strong>{sale.date}</strong><span className="block text-xs text-slate-400">{sale.buyer}</span></td><td className="p-4"><strong className="block">{sale.item}</strong><span className="text-xs text-slate-400">{sale.reference}</span></td><td className="p-4"><strong>{sale.amount}</strong><span className="block text-xs text-emerald-600">Neto {sale.net}</span></td><td className="p-4"><span className={cn('rounded-full px-2 py-1 text-[11px] font-black', sale.status === 'Acreditado' ? 'bg-emerald-50 text-emerald-700' : sale.status === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600')}>{sale.status}</span><span className="mt-1 block text-xs text-slate-400">{sale.method}</span></td><td className="p-4 font-semibold">{sale.agent}</td><td className="p-4"><button className="accent-text whitespace-nowrap text-xs font-black" onClick={() => setSelectedSale(sale)}>{selectedSale?.id === sale.id ? 'Seleccionado' : 'Ver detalle'} <ChevronRight size={14} className="inline" /></button></td></tr>)}</tbody></table></div>
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5"><div><p className="accent-text text-xs font-black uppercase">Historial de ventas</p><h3 className="mt-1 text-xl font-black">{demo.key === 'autos' ? 'Boletos y operaciones de salón' : 'Operaciones recientes'}</h3></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">{finance.sales.length} operaciones</span></div>
+        <div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-sm"><thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400"><tr><th className="p-4">Fecha / comprador</th><th className="p-4">{demo.key === 'autos' ? 'Vehículo' : demo.key === 'relojes' ? 'Reloj' : 'Item'}</th><th className="p-4">Importe</th><th className="p-4">Pago</th><th className="p-4">Asesor</th><th className="p-4">Acción</th></tr></thead><tbody>{finance.sales.map((sale) => <tr key={sale.id} className="border-t border-slate-100"><td className="p-4"><strong>{sale.date}</strong><span className="block text-xs text-slate-400">{sale.buyer}</span></td><td className="p-4"><strong className="block">{sale.item}</strong><span className="text-xs text-slate-400">{sale.reference}</span></td><td className="p-4"><strong>{sale.amount}</strong><span className="block text-xs text-emerald-600">Neto {sale.net}</span></td><td className="p-4"><span className={cn('rounded-full px-2 py-1 text-[11px] font-black', sale.status === 'Acreditado' ? 'bg-emerald-50 text-emerald-700' : sale.status === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600')}>{sale.status}</span><span className="mt-1 block text-xs text-slate-400">{sale.method}</span></td><td className="p-4 font-semibold">{sale.agent}</td><td className="p-4"><button className="accent-text whitespace-nowrap text-xs font-black" onClick={() => setSelectedSale(sale)}>{selectedSale?.id === sale.id ? 'Seleccionado' : 'Ver detalle'} <ChevronRight size={14} className="inline" /></button></td></tr>)}</tbody></table></div>
         {selectedSale && <div className="border-t border-slate-200 bg-slate-50 p-5"><div className="flex items-start justify-between gap-3"><div><p className="accent-text text-[10px] font-black uppercase">Detalle de operación · {selectedSale.id}</p><h4 className="mt-1 text-lg font-black">{selectedSale.item} para {selectedSale.buyer}</h4></div><button className="text-xs font-black text-slate-400" onClick={() => setSelectedSale(null)}>Cerrar</button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><Info label="Adquisición" value={selectedSale.acquisition}/><Info label="Precio de venta" value={selectedSale.amount}/><Info label="Costos" value={selectedSale.costs}/><Info label="Margen neto" value={selectedSale.margin}/></div><div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><div><p className="text-xs font-black">Comprobante y liquidación</p><p className="mt-1 text-xs text-slate-500">{selectedSale.receipt}</p></div><button className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black hover:bg-slate-50">Ver comprobante</button></div></div>}
       </section>
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Pagos</p><h3 className="mt-1 text-xl font-black">Últimos movimientos</h3></div><WalletCards className="text-slate-300" size={19}/></div><div className="mt-5 grid gap-3">{finance.payments.map((payment) => <div key={payment.id} className="rounded-xl border border-slate-100 p-3"><div className="flex items-center justify-between gap-2"><strong className="text-sm">{payment.label}</strong><span className={cn('text-xs font-black', payment.status === 'Acreditado' ? 'text-emerald-600' : 'text-amber-600')}>{payment.status}</span></div><p className="mt-1 text-xs text-slate-500">{payment.detail}</p><div className="mt-2 flex justify-between text-xs"><span className="text-slate-400">{payment.date}</span><strong>{payment.amount}</strong></div></div>)}</div></section>
+
+      {demo.key === 'autos' && finance.credits ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="accent-text text-xs font-black uppercase">Créditos Prendarios</p>
+              <h3 className="mt-1 text-xl font-black">Scoring bancario en vivo</h3>
+            </div>
+            <CreditCard className="text-slate-300" size={19} />
+          </div>
+          <div className="mt-5 grid gap-3">
+            {finance.credits.map((cred) => (
+              <div key={cred.id} className="rounded-xl border border-slate-100 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <strong className="text-sm font-black">{cred.bank}</strong>
+                  <span className={cn('rounded-full px-2 py-0.5 text-xs font-black', cred.status === 'Pre-aprobado' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')}>
+                    {cred.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs font-semibold text-slate-700">{cred.client} · {cred.item}</p>
+                <div className="mt-2 flex justify-between text-xs text-slate-500">
+                  <span>{cred.plan} ({cred.rate})</span>
+                  <strong className="text-slate-900 font-bold">{cred.amount}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="accent-text text-xs font-black uppercase">Pagos</p>
+              <h3 className="mt-1 text-xl font-black">Últimos movimientos</h3>
+            </div>
+            <WalletCards className="text-slate-300" size={19} />
+          </div>
+          <div className="mt-5 grid gap-3">
+            {finance.payments?.map((payment) => (
+              <div key={payment.id} className="rounded-xl border border-slate-100 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <strong className="text-sm">{payment.label}</strong>
+                  <span className={cn('text-xs font-black', payment.status === 'Acreditado' ? 'text-emerald-600' : 'text-amber-600')}>
+                    {payment.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">{payment.detail}</p>
+                <div className="mt-2 flex justify-between text-xs">
+                  <span className="text-slate-400">{payment.date}</span>
+                  <strong>{payment.amount}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Equipo comercial</p><h3 className="mt-1 text-xl font-black">Agentes de ventas</h3></div><span className="text-xs font-bold text-slate-400">Este mes</span></div><div className="mt-5 grid gap-3 md:grid-cols-3">{finance.agents.map((agent) => <article key={agent.name} className="rounded-xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">{agent.initials}</span><div><strong className="block text-sm">{agent.name}</strong><span className="text-xs text-slate-500">{agent.role}</span></div></div><div className="mt-4 grid grid-cols-2 gap-3"><Info label="Ventas cerradas" value={agent.sales}/><Info label="Facturado" value={agent.revenue}/><Info label="Conversión" value={agent.conversion}/><Info label="Comisión" value={agent.commission}/></div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="accent-bg h-full rounded-full" style={{ width: `${agent.progress}%` }}/></div><p className="mt-2 text-[10px] font-bold text-slate-400">{agent.progress}% del objetivo mensual</p></article>)}</div></section>
   </section>

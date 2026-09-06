@@ -77,6 +77,16 @@ export function Sidebar({ agency, logo, metrics, section, onLogoClick, onSection
           </div>
         </div>
       </div>
+
+      <div className="mt-6 border-t border-slate-200 pt-4 text-center">
+        <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Demos verticales</p>
+        <div className="grid grid-cols-2 gap-1.5 text-[11px] font-bold">
+          <a href="/" className="rounded-lg bg-blue-600 py-1.5 text-white shadow-sm">Inmobiliaria</a>
+          <a href="/autos" className="rounded-lg bg-slate-100 py-1.5 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">Autos</a>
+          <a href="/relojes" className="rounded-lg bg-slate-100 py-1.5 text-slate-700 transition hover:bg-amber-50 hover:text-amber-700">Relojes</a>
+          <a href="/eventos" className="rounded-lg bg-slate-100 py-1.5 text-slate-700 transition hover:bg-violet-50 hover:text-violet-700">Eventos</a>
+        </div>
+      </div>
     </aside>
   )
 }
