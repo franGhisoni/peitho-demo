@@ -85,7 +85,7 @@ export function VerticalDemo({ type }) {
               </div>
             </div>
             <div className="hidden items-center gap-3 rounded-full border border-slate-200 bg-white py-2 pl-2 pr-4 shadow-sm sm:flex">
-              <span className="accent-soft grid size-8 place-items-center rounded-full font-black">P</span>
+              <span className="accent-soft grid size-8 place-items-center rounded-full font-black text-xs">{demo.brand.startsWith('SI') ? 'SI' : demo.brand[0]}</span>
               <div className="text-xs"><strong className="block">Demo activa</strong><span className="text-slate-500">Datos simulados</span></div>
             </div>
           </header>
