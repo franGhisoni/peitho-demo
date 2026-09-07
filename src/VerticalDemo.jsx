@@ -208,7 +208,7 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
         <button className="absolute right-3 top-3 text-slate-400 lg:hidden" onClick={onClose}><X /></button>
         <div className="flex items-center gap-3">
           <div className="accent-bg grid size-11 place-items-center rounded-xl text-white shadow-lg">{demo.key === 'relojes' ? <Watch /> : demo.key === 'autos' ? <Car /> : <Ticket />}</div>
-          <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">Demo vertical</p><h2 className="font-black">{demo.brand}</h2></div>
+          <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">{demo.key === 'autos' ? 'CRM Automotriz' : demo.key === 'relojes' ? 'CRM Luxury' : demo.key === 'eventos' ? 'Ticketing & CRM' : 'CRM'}</p><h2 className="font-black">{demo.brand}</h2></div>
         </div>
         <nav className="mt-8 grid gap-1.5">
           {nav.map(([id, label, Icon]) => <button key={id} className={cn('flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold transition', section === id ? 'accent-nav' : 'text-slate-400 hover:bg-white/5 hover:text-white')} onClick={() => onNavigate(id)}><Icon size={18} />{label}</button>)}
@@ -227,16 +227,6 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
             </button>
           </div>
         )}
-
-        <div className="mt-4 border-t border-white/10 pt-3 text-center">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Otras demos verticales</p>
-          <div className="grid grid-cols-2 gap-1.5 text-[11px] font-bold">
-            <a href="/" className="rounded-lg bg-white/5 py-1.5 text-slate-300 transition hover:bg-white/15 hover:text-white">Inmobiliaria</a>
-            <a href="/autos" className={cn("rounded-lg py-1.5 transition", demo.key === 'autos' ? "bg-blue-600 text-white shadow-sm" : "bg-white/5 text-slate-300 hover:bg-white/15 hover:text-white")}>Autos</a>
-            <a href="/relojes" className={cn("rounded-lg py-1.5 transition", demo.key === 'relojes' ? "bg-amber-600 text-white shadow-sm" : "bg-white/5 text-slate-300 hover:bg-white/15 hover:text-white")}>Relojes</a>
-            <a href="/eventos" className={cn("rounded-lg py-1.5 transition", demo.key === 'eventos' ? "bg-violet-600 text-white shadow-sm" : "bg-white/5 text-slate-300 hover:bg-white/15 hover:text-white")}>Eventos</a>
-          </div>
-        </div>
       </aside>
     </>
   )
