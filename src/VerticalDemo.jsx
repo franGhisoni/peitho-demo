@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import {
   AlertTriangle, ArrowRight, BarChart3, Boxes, CalendarCheck, Car, ChevronRight, CircleDollarSign,
   ClipboardList, Clock3, CreditCard, Gauge, KeyRound, LayoutDashboard, Menu, MessageCircle,
-  Search, Send, ShieldCheck, Sparkles, Ticket, TrendingUp, Users, Watch, X, WalletCards,
+  Receipt, Search, Send, ShieldCheck, Sparkles, Ticket, TrendingUp, Users, Watch, X, WalletCards,
   Calculator, Wrench,
 } from 'lucide-react'
 import { verticalDemos } from './data/verticalDemoData'
@@ -11,6 +11,8 @@ import { EventsOperations } from './components/EventsOperations'
 import { AutoCustomerProfile } from './components/AutoCustomerProfile'
 import { AutoFinanceSimulator } from './components/AutoFinanceSimulator'
 import { AutoTestDriveView } from './components/AutoTestDriveView'
+import { AutoTransfersView } from './components/AutoTransfersView'
+import { AutoTransferReceiptModal } from './components/AutoTransferReceiptModal'
 
 const iconMap = { users: Users, stock: Boxes, trend: TrendingUp, alert: AlertTriangle, car: Car }
 
@@ -18,6 +20,8 @@ export function VerticalDemo({ type }) {
   const demo = verticalDemos[type]
   const [section, setSection] = useState('dashboard')
   const [leads, setLeads] = useState(demo.leads)
+  const [transfers, setTransfers] = useState(demo.transfers || [])
+  const [activeReceipt, setActiveReceipt] = useState(null)
   const [selectedId, setSelectedId] = useState(demo.leads[0].id)
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
@@ -52,6 +56,68 @@ export function VerticalDemo({ type }) {
     setDraft('')
   }
 
+  function confirmTransfer(transferId) {
+    setTransfers((current) =>
+      current.map((t) => (t.id === transferId ? { ...t, status: 'Acreditado' } : t))
+    )
+    setLeads((current) =>
+      current.map((lead) => ({
+        ...lead,
+        messages: lead.messages.map((m) => {
+          if (m.transferReceipt && m.transferReceipt.id === transferId) {
+            return {
+              ...m,
+              transferReceipt: { ...m.transferReceipt, status: 'Acreditado' },
+            }
+          }
+          return m
+        }),
+      }))
+    )
+    if (activeReceipt && activeReceipt.id === transferId) {
+      setActiveReceipt((prev) => (prev ? { ...prev, status: 'Acreditado' } : null))
+    }
+  }
+
+  function simulateClientTransfer() {
+    if (!selectedLead) return
+    const newReceiptId = `tr-${Date.now()}`
+    const relatedItem = demo.items?.find((i) => i.id === selectedLead.itemId)
+    const newReceipt = {
+      id: newReceiptId,
+      client: selectedLead.name,
+      vehicle: relatedItem ? relatedItem.title : selectedLead.intent,
+      amount: 'USD 1.500',
+      concept: `Seña y reserva de unidad · ${relatedItem ? relatedItem.title : selectedLead.intent}`,
+      bank: 'Banco Galicia',
+      opNumber: `OP-${Math.floor(100000 + Math.random() * 900000)}-COELSA`,
+      date: 'Hoy · Recién',
+      status: 'Pendiente',
+      cbuOrigin: '0070123400000088991122',
+      cbuTarget: '0170099900000099887766 (SI Motors SRL)',
+      cuitOrigin: '20-33445566-9',
+    }
+    const newMessage = {
+      from: 'client',
+      text: `Te adjunto el comprobante oficial de la transferencia bancaria por ${newReceipt.amount} para confirmar la seña de la unidad.`,
+      time: 'Ahora',
+      transferReceipt: newReceipt,
+    }
+    setTransfers((prev) => [newReceipt, ...prev])
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === selectedLead.id
+          ? {
+              ...l,
+              stage: 'reserva',
+              messages: [...l.messages, newMessage],
+              lastContact: 'Ahora',
+            }
+          : l
+      )
+    )
+  }
+
   const nav = [
     ['dashboard', 'Dashboard', LayoutDashboard],
     ['pipeline', demo.pipelineLabel, Users],
@@ -67,6 +133,7 @@ export function VerticalDemo({ type }) {
     ] : []),
     ...(type === 'autos' ? [
       ['testdrive', 'Test Drive & Peritaje', CalendarCheck],
+      ['transfers', 'Control de Transferencias', Receipt],
       ['finance', 'Finanzas & Ventas', WalletCards],
     ] : []),
   ]
@@ -92,14 +159,43 @@ export function VerticalDemo({ type }) {
 
           {section === 'dashboard' && <Dashboard demo={demo} leads={leads} onNavigate={navigate} onOpenChat={openChat} />}
           {section === 'pipeline' && <Pipeline demo={demo} leads={leads} selectedId={selectedId} onAdvance={advance} onOpenChat={openChat} onSelect={setSelectedId} />}
-          {section === 'chats' && <Chats demo={demo} draft={draft} leads={leads} selectedLead={selectedLead} onDraft={setDraft} onSelect={setSelectedId} onSend={sendMessage} />}
+          {section === 'chats' && (
+            <Chats
+              demo={demo}
+              draft={draft}
+              leads={leads}
+              selectedLead={selectedLead}
+              onDraft={setDraft}
+              onSelect={setSelectedId}
+              onSend={sendMessage}
+              onViewReceipt={setActiveReceipt}
+              onConfirmTransfer={confirmTransfer}
+              onSimulateTransfer={simulateClientTransfer}
+            />
+          )}
           {section === 'inventory' && <Inventory demo={demo} items={filteredItems} query={query} onQuery={setQuery} />}
           {section === 'market' && (type === 'relojes' ? <WatchMarket demo={demo} /> : <Payments demo={demo} leads={leads} />)}
           {section === 'operations' && type === 'eventos' && <EventsOperations demo={demo} leads={leads} />}
           {section === 'finance' && <BusinessFinance demo={demo} />}
           {section === 'testdrive' && type === 'autos' && <AutoTestDriveView demo={demo} leads={leads} onOpenChat={openChat} />}
+          {section === 'transfers' && type === 'autos' && (
+            <AutoTransfersView
+              demo={demo}
+              leads={leads}
+              transfers={transfers}
+              onConfirmTransfer={confirmTransfer}
+              onOpenChat={openChat}
+            />
+          )}
         </main>
       </div>
+      {activeReceipt && (
+        <AutoTransferReceiptModal
+          receipt={activeReceipt}
+          onClose={() => setActiveReceipt(null)}
+          onConfirm={confirmTransfer}
+        />
+      )}
     </div>
   )
 }
@@ -123,7 +219,14 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
           <div className="mt-4 flex items-center justify-between text-xs text-slate-400"><span>Estado</span><span className="flex items-center gap-1 font-bold text-emerald-400"><i className="size-2 rounded-full bg-emerald-400" />Activo</span></div>
         </div>
         {demo.key === 'eventos' && <a href="/eventos/app" className="mt-4 rounded-xl bg-violet-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-violet-700">Abrir app de control de acceso</a>}
-        {demo.key === 'autos' && <button onClick={() => onNavigate('testdrive')} className="mt-4 rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700">Ver agenda de Test Drive</button>}
+        {demo.key === 'autos' && (
+          <div className="mt-4 flex flex-col gap-2">
+            <button onClick={() => onNavigate('testdrive')} className="rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700">Ver agenda de Test Drive</button>
+            <button onClick={() => onNavigate('transfers')} className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-950/40 px-3 py-2 text-center text-xs font-bold text-blue-200 hover:bg-blue-900/60 transition">
+              <Receipt size={14} /> Control de Transferencias
+            </button>
+          </div>
+        )}
 
         <div className="mt-4 border-t border-white/10 pt-3 text-center">
           <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Otras demos verticales</p>
@@ -159,13 +262,174 @@ function Pipeline({ demo, leads, selectedId, onAdvance, onOpenChat, onSelect }) 
   return <section className="mt-7 grid gap-5"><div className="flex gap-3 overflow-x-auto pb-2">{demo.stages.map(stage=><div key={stage.id} className="w-[270px] shrink-0 rounded-2xl border border-slate-200 bg-slate-100/60 p-3"><div className="flex items-center justify-between px-1 py-2"><strong className="text-sm">{stage.label}</strong><span className={cn('rounded-full px-2 py-0.5 text-xs font-black',stage.tone)}>{leads.filter(l=>l.stage===stage.id).length}</span></div><div className="mt-2 grid gap-3">{leads.filter(l=>l.stage===stage.id).map(lead=><article key={lead.id} onClick={()=>onSelect(lead.id)} className={cn('cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md',selectedId===lead.id?'accent-border ring-2 ring-offset-1':'border-slate-200')}><div className="flex items-start justify-between gap-2"><strong className="text-sm">{lead.name}</strong><span className="text-xs font-black text-emerald-600">{lead.score}</span></div><p className="mt-2 text-sm font-semibold text-slate-700">{lead.intent}</p><p className="mt-1 text-xs text-slate-500">{lead.budget}</p><div className="mt-3 flex flex-wrap gap-1">{lead.tags.slice(0,2).map(tag=><span key={tag} className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{tag}</span>)}</div><div className="mt-4 grid grid-cols-2 gap-2"><button className="accent-button rounded-lg py-2 text-xs font-black" onClick={e=>{e.stopPropagation();onOpenChat(lead)}}>Abrir chat</button><button className="rounded-lg border border-slate-200 py-2 text-xs font-black hover:bg-slate-50" onClick={e=>{e.stopPropagation();onAdvance(lead)}}><ArrowRight size={13} className="inline" /> Avanzar</button></div></article>)}</div></div>)}</div>{selected&&<div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_auto]"><div><p className="accent-text text-xs font-black uppercase">Siguiente mejor acción</p><h3 className="mt-1 text-xl font-black">{selected.name}</h3><p className="mt-2 text-sm text-slate-600">{selected.nextAction}</p></div><button className="accent-button self-center rounded-xl px-4 py-3 text-sm font-black" onClick={()=>onOpenChat(selected)}><MessageCircle size={16} className="mr-2 inline" />Continuar conversación</button></div>}</section>
 }
 
-function Chats({ demo, draft, leads, selectedLead, onDraft, onSelect, onSend }) {
+function Chats({
+  demo,
+  draft,
+  leads,
+  selectedLead,
+  onDraft,
+  onSelect,
+  onSend,
+  onViewReceipt,
+  onConfirmTransfer,
+  onSimulateTransfer,
+}) {
   const related = demo.items.find(item=>item.id===selectedLead.itemId)
   const [chatTab, setChatTab] = useState('profile') // 'profile', 'vehicle', 'finance'
 
   return <section className="mt-7 grid min-h-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[270px_minmax(0,1fr)_340px]">
-    <aside className="border-b border-slate-200 p-3 lg:border-b-0 lg:border-r"><div className="relative mb-3"><Search size={15} className="absolute left-3 top-3 text-slate-400"/><input className="h-10 w-full rounded-xl bg-slate-100 pl-9 pr-3 text-sm outline-none" placeholder="Buscar conversación"/></div><div className="flex gap-2 overflow-x-auto lg:grid">{leads.map(lead=><button key={lead.id} onClick={()=>onSelect(lead.id)} className={cn('min-w-[220px] rounded-xl border p-3 text-left lg:min-w-0',lead.id===selectedLead.id?'accent-soft accent-border':'border-transparent hover:bg-slate-50')}><div className="flex justify-between gap-2"><strong className="truncate text-sm">{lead.name}</strong><span className="shrink-0 text-[10px] text-slate-400">{lead.lastContact}</span></div><p className="mt-1 truncate text-xs text-slate-500">{lead.messages.at(-1)?.text}</p></button>)}</div></aside>
-    <div className="grid min-w-0 grid-rows-[auto_1fr_auto] bg-[#f8fafc]"><header className="border-b border-slate-200 bg-white p-4"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">{selectedLead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</span><div><strong className="block">{selectedLead.name}</strong><span className="text-xs text-slate-500">{selectedLead.source} · {selectedLead.phone}</span></div></div></header><div className="flex flex-col gap-3 overflow-y-auto p-4">{selectedLead.messages.map((m,i)=><div key={i} className={cn('max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-6 shadow-sm',m.from==='agent'?'accent-chat ml-auto':'mr-auto bg-white')}><p>{m.text}</p><span className="block text-right text-[10px] opacity-50">{m.time}</span></div>)}</div><footer className="border-t border-slate-200 bg-white p-3"><button onClick={()=>onDraft(demo.key==='relojes'?`Hola ${selectedLead.name.split(' ')[0]}, confirmé disponibilidad y preparé la mejor opción según el precio actual de mercado.`:demo.key==='autos'?`Hola ${selectedLead.name.split(' ')[0]}, tenemos la unidad disponible en salón para coordinar un Test Drive y podemos recibir tu auto actual para peritaje mecánico en rampa sin costo.`:`Hola ${selectedLead.name.split(' ')[0]}, confirmé que todavía hay lugar. Puedo reservarte el cupo y enviarte el link de pago.`)} className="mb-2 text-xs font-black accent-text"><Sparkles size={13} className="mr-1 inline"/>Sugerir respuesta</button><div className="flex gap-2"><input value={draft} onChange={e=>onDraft(e.target.value)} onKeyDown={e=>e.key==='Enter'&&onSend()} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-slate-400" placeholder="Escribí una respuesta..."/><button onClick={onSend} className="accent-button grid size-11 shrink-0 place-items-center rounded-xl"><Send size={17}/></button></div></footer></div>
+    <aside className="border-b border-slate-200 p-3 lg:border-b-0 lg:border-r">
+      <div className="relative mb-3">
+        <Search size={15} className="absolute left-3 top-3 text-slate-400"/>
+        <input className="h-10 w-full rounded-xl bg-slate-100 pl-9 pr-3 text-sm outline-none" placeholder="Buscar conversación"/>
+      </div>
+      <div className="flex gap-2 overflow-x-auto lg:grid">
+        {leads.map(lead=>(
+          <button key={lead.id} onClick={()=>onSelect(lead.id)} className={cn('min-w-[220px] rounded-xl border p-3 text-left lg:min-w-0',lead.id===selectedLead.id?'accent-soft accent-border':'border-transparent hover:bg-slate-50')}>
+            <div className="flex justify-between gap-2">
+              <strong className="truncate text-sm">{lead.name}</strong>
+              <span className="shrink-0 text-[10px] text-slate-400">{lead.lastContact}</span>
+            </div>
+            <p className="mt-1 truncate text-xs text-slate-500">{lead.messages.at(-1)?.text}</p>
+          </button>
+        ))}
+      </div>
+    </aside>
+
+    <div className="grid min-w-0 grid-rows-[auto_1fr_auto] bg-[#f8fafc]">
+      <header className="border-b border-slate-200 bg-white p-4">
+        <div className="flex items-center gap-3">
+          <span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">
+            {selectedLead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}
+          </span>
+          <div>
+            <strong className="block">{selectedLead.name}</strong>
+            <span className="text-xs text-slate-500">{selectedLead.source} · {selectedLead.phone}</span>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-col gap-3 overflow-y-auto p-4">
+        {selectedLead.messages.map((m, i) => (
+          <div
+            key={i}
+            className={cn(
+              'max-w-[85%] sm:max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-6 shadow-sm',
+              m.from === 'agent' ? 'accent-chat ml-auto' : 'mr-auto bg-white'
+            )}
+          >
+            <p>{m.text}</p>
+
+            {m.transferReceipt && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-800 shadow-xs">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="grid size-7 place-items-center rounded-lg bg-blue-600 text-white font-black text-xs">
+                      <Receipt size={14} />
+                    </span>
+                    <span className="text-xs font-black text-slate-800">
+                      {m.transferReceipt.bank || 'Comprobante Bancario'}
+                    </span>
+                  </div>
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-[10px] font-black',
+                      m.transferReceipt.status === 'Pendiente'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    )}
+                  >
+                    {m.transferReceipt.status}
+                  </span>
+                </div>
+
+                <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-400">Monto señado</span>
+                    <strong className="text-sm font-black text-slate-900">{m.transferReceipt.amount}</strong>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-400">Operación</span>
+                    <span className="font-mono text-[11px] font-bold text-slate-600 truncate block">{m.transferReceipt.opNumber}</span>
+                  </div>
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/80 pt-2 text-xs">
+                  <span className="text-[11px] text-slate-500">{m.transferReceipt.date}</span>
+                  <div className="flex gap-1.5">
+                    {onViewReceipt && (
+                      <button
+                        type="button"
+                        onClick={() => onViewReceipt(m.transferReceipt)}
+                        className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-black text-slate-700 transition hover:bg-slate-100 cursor-pointer"
+                      >
+                        Ver comprobante
+                      </button>
+                    )}
+                    {m.transferReceipt.status === 'Pendiente' && onConfirmTransfer && (
+                      <button
+                        type="button"
+                        onClick={() => onConfirmTransfer(m.transferReceipt.id)}
+                        className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white transition hover:bg-emerald-700 cursor-pointer"
+                      >
+                        Confirmar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <span className="block text-right text-[10px] opacity-50 mt-1">{m.time}</span>
+          </div>
+        ))}
+      </div>
+
+      <footer className="border-t border-slate-200 bg-white p-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <button
+            onClick={() =>
+              onDraft(
+                demo.key === 'relojes'
+                  ? `Hola ${selectedLead.name.split(' ')[0]}, confirmé disponibilidad y preparé la mejor opción según el precio actual de mercado.`
+                  : demo.key === 'autos'
+                  ? `Hola ${selectedLead.name.split(' ')[0]}, tenemos la unidad disponible en salón para coordinar un Test Drive y podemos recibir tu auto actual para peritaje mecánico en rampa sin costo.`
+                  : `Hola ${selectedLead.name.split(' ')[0]}, confirmé que todavía hay lugar. Puedo reservarte el cupo y enviarte el link de pago.`
+              )
+            }
+            className="text-xs font-black accent-text"
+          >
+            <Sparkles size={13} className="mr-1 inline" />
+            Sugerir respuesta
+          </button>
+
+          {demo.key === 'autos' && onSimulateTransfer && (
+            <button
+              type="button"
+              onClick={onSimulateTransfer}
+              className="flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700 hover:bg-blue-100 transition cursor-pointer"
+              title="Simula que el cliente transfiere un adelanto y envía el comprobante"
+            >
+              <Receipt size={13} />
+              Simular comprobante de adelanto
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            value={draft}
+            onChange={(e) => onDraft(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onSend()}
+            className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-slate-400"
+            placeholder="Escribí una respuesta..."
+          />
+          <button onClick={onSend} className="accent-button grid size-11 shrink-0 place-items-center rounded-xl">
+            <Send size={17} />
+          </button>
+        </div>
+      </footer>
+    </div>
     
     <aside className="border-t border-slate-200 p-4 lg:border-l lg:border-t-0 overflow-y-auto max-h-[760px]">
       {demo.key === 'autos' ? (
