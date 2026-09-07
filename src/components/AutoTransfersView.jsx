@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Eye,
   FileCheck2,
+  FileSpreadsheet,
   Filter,
   Landmark,
   MessageCircle,
@@ -23,6 +24,7 @@ import {
   WalletCards,
 } from 'lucide-react'
 import { cn } from '../lib/helpers'
+import { exportToExcel } from '../lib/excelExport'
 import { AutoTransferReceiptModal } from './AutoTransferReceiptModal'
 
 export function AutoTransfersView({ demo, leads, transfers, onConfirmTransfer, onOpenChat }) {
@@ -49,6 +51,40 @@ export function AutoTransfersView({ demo, leads, transfers, onConfirmTransfer, o
       return `${t.client} ${t.vehicle} ${t.amount} ${t.bank} ${t.opNumber}`.toLowerCase().includes(q)
     })
   }, [transferList, filter, query])
+
+  function exportTransfersExcel() {
+    exportToExcel({
+      filename: `SI_Motors_Conciliacion_Transferencias_${new Date().toISOString().slice(0, 10)}`,
+      sheets: [
+        {
+          name: 'Transferencias y Señas',
+          data: filteredTransfers.map((t) => ({
+            'ID Transferencia': t.id,
+            'N° Comprobante / COELSA': t.opNumber,
+            'Fecha / Hora': t.date || t.time,
+            'Cliente Emisor': t.client,
+            'Vehículo Señado': t.vehicle,
+            'Monto Transferido': t.amount,
+            'Banco Origen': t.bank,
+            'CBU / CVU Origen': t.cbuOrigin,
+            'CUIT / CUIL': t.cuitOrigin || '—',
+            'Concepto': t.concept,
+            'Estado': t.status,
+            'Cuenta Destino': t.cbuTarget || 'SI Motors SRL (Banco Galicia)',
+            'Asesor Comercial': t.advisor || 'Lucas Benítez',
+          })),
+        },
+        {
+          name: 'Resumen Tesorería',
+          data: [
+            { 'Indicador': 'Transferencias pendientes de confirmación', 'Valor': pendingCount },
+            { 'Indicador': 'Transferencias acreditadas', 'Valor': confirmedCount },
+            { 'Indicador': 'Total transferencias auditadas', 'Valor': transferList.length },
+          ],
+        },
+      ],
+    })
+  }
 
   return (
     <section className="mt-7 grid gap-6">
@@ -79,7 +115,7 @@ export function AutoTransfersView({ demo, leads, transfers, onConfirmTransfer, o
               chats. Al confirmar la acreditación, el vehículo se bloquea automáticamente en inventario.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
               <span className="block text-2xl font-black text-amber-400">{pendingCount}</span>
               <span className="text-[11px] font-bold text-slate-300">Por confirmar</span>
@@ -88,6 +124,15 @@ export function AutoTransfersView({ demo, leads, transfers, onConfirmTransfer, o
               <span className="block text-2xl font-black text-emerald-400">{confirmedCount}</span>
               <span className="text-[11px] font-bold text-slate-300">Acreditadas</span>
             </div>
+            <button
+              type="button"
+              onClick={exportTransfersExcel}
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-700 cursor-pointer"
+              title="Descargar planilla Excel con la conciliación bancaria"
+            >
+              <FileSpreadsheet size={16} />
+              <span>Exportar a Excel</span>
+            </button>
           </div>
         </div>
       </div>

@@ -21,6 +21,12 @@ export const verticalDemos = {
       { label: 'Margen potencial', value: '18,4%', detail: 'Promedio del inventario', kind: 'trend' },
       { label: 'Alertas de precio', value: '6', detail: 'Mercado se movió >5%', kind: 'alert' },
     ],
+    months: [
+      { id: '2026-09', label: 'Septiembre 2026 (En curso)', shortLabel: 'Septiembre 2026', isCurrent: true },
+      { id: '2026-08', label: 'Agosto 2026', shortLabel: 'Agosto 2026' },
+      { id: '2026-07', label: 'Julio 2026', shortLabel: 'Julio 2026' },
+      { id: 'all', label: 'Todos los meses (Q3 Acumulado)', shortLabel: 'Todo Q3 2026' },
+    ],
     finance: {
       summary: [
         { label: 'Ventas del mes', value: '12', detail: '+3 vs. mes anterior', icon: 'sales' },
@@ -113,24 +119,93 @@ export const verticalDemos = {
       { id: 'reserva', label: 'Seña recibida', tone: 'bg-emerald-50 text-emerald-700' },
       { id: 'entregado', label: 'Entregado', tone: 'bg-slate-100 text-slate-700' },
     ],
+    months: [
+      { id: '2026-09', label: 'Septiembre 2026 (En curso)', shortLabel: 'Septiembre 2026', isCurrent: true },
+      { id: '2026-08', label: 'Agosto 2026', shortLabel: 'Agosto 2026' },
+      { id: '2026-07', label: 'Julio 2026', shortLabel: 'Julio 2026' },
+      { id: 'all', label: 'Todos los meses (Q3 Acumulado)', shortLabel: 'Todo Q3 2026' },
+    ],
     dashboardCards: [
-      { label: 'Unidades vendidas', value: '23', detail: '+18% vs. mes anterior', kind: 'users' },
-      { label: 'Salón & Stock', value: '41', detail: 'USD 920k valorizado', kind: 'stock' },
-      { label: 'Test Drives agendados', value: '38', detail: '84% asistencia efectiva', kind: 'trend' },
+      { label: 'Unidades señadas/vendidas', value: '4', detail: 'Semana 1 en curso', kind: 'users' },
+      { label: 'Salón & Stock disponible', value: '41', detail: 'USD 920k valorizado', kind: 'stock' },
+      { label: 'Test Drives agendados', value: '12', detail: 'Próximos 7 días hábiles', kind: 'trend' },
       { label: 'Alertas de Stock Aging', value: '4', detail: '>45 días en salón', kind: 'alert' },
     ],
+    monthlyDashboardCards: {
+      '2026-09': [
+        { label: 'Unidades señadas/vendidas', value: '4', detail: 'Semana 1 en curso', kind: 'users' },
+        { label: 'Salón & Stock disponible', value: '41', detail: 'USD 920k valorizado', kind: 'stock' },
+        { label: 'Test Drives agendados', value: '12', detail: 'Próximos 7 días hábiles', kind: 'trend' },
+        { label: 'Alertas de Stock Aging', value: '4', detail: '>45 días en salón', kind: 'alert' },
+      ],
+      '2026-08': [
+        { label: 'Unidades vendidas', value: '23', detail: '+18% vs. mes anterior', kind: 'users' },
+        { label: 'Salón & Stock', value: '38', detail: 'USD 875k valorizado', kind: 'stock' },
+        { label: 'Test Drives coordinados', value: '38', detail: '84% asistencia efectiva', kind: 'trend' },
+        { label: 'Alertas de Stock Aging', value: '3', detail: 'Resueltas 2 con bonificación', kind: 'alert' },
+      ],
+      '2026-07': [
+        { label: 'Unidades vendidas', value: '19', detail: 'Cierre de vacaciones invierno', kind: 'users' },
+        { label: 'Salón & Stock', value: '35', detail: 'USD 790k valorizado', kind: 'stock' },
+        { label: 'Test Drives coordinados', value: '31', detail: '81% asistencia efectiva', kind: 'trend' },
+        { label: 'Alertas de Stock Aging', value: '5', detail: 'Stock rotado con éxito', kind: 'alert' },
+      ],
+      all: [
+        { label: 'Unidades acumuladas Q3', value: '46', detail: 'Julio – Septiembre 2026', kind: 'users' },
+        { label: 'Inventario activo', value: '41', detail: 'USD 920k valorizado', kind: 'stock' },
+        { label: 'Total Test Drives Q3', value: '81', detail: '83% asistencia promedio', kind: 'trend' },
+        { label: 'Aging promedio salón', value: '26 días', detail: 'Meta salón: <35 días', kind: 'alert' },
+      ],
+    },
     finance: {
       summary: [
-        { label: 'Ventas del mes', value: '23 unidades', detail: '+4 vs. mes pasado', icon: 'sales' },
-        { label: 'Facturado salón', value: 'USD 548.000', detail: 'USD 382.000 contado/anticipo', icon: 'sales' },
-        { label: 'Créditos prendarios', value: '14 aprobados', detail: '61% del total operado', icon: 'cost' },
-        { label: 'Margen promedio', value: '14,8%', detail: 'Por unidad entregada', icon: 'profit' },
+        { label: 'Ventas de Septiembre', value: '4 unidades', detail: 'Semana 1 en curso', icon: 'sales' },
+        { label: 'Facturado salón', value: 'USD 68.250', detail: 'USD 32.900 ya acreditado', icon: 'sales' },
+        { label: 'Créditos prendarios', value: '3 en curso', detail: 'Banco Santander y Galicia', icon: 'cost' },
+        { label: 'Margen promedio', value: '14,2%', detail: 'Sobre unidades señadas', icon: 'profit' },
       ],
+      monthlySummaries: {
+        '2026-09': [
+          { label: 'Ventas de Septiembre', value: '4 unidades', detail: 'Semana 1 en curso', icon: 'sales' },
+          { label: 'Facturado salón', value: 'USD 68.250', detail: 'USD 32.900 ya acreditado', icon: 'sales' },
+          { label: 'Créditos prendarios', value: '3 en curso', detail: 'Banco Santander y Galicia', icon: 'cost' },
+          { label: 'Margen promedio', value: '14,2%', detail: 'Sobre unidades señadas', icon: 'profit' },
+        ],
+        '2026-08': [
+          { label: 'Ventas de Agosto', value: '23 unidades', detail: '+4 vs. mes anterior', icon: 'sales' },
+          { label: 'Facturado salón', value: 'USD 548.000', detail: 'USD 382.000 contado/anticipo', icon: 'sales' },
+          { label: 'Créditos prendarios', value: '14 aprobados', detail: '61% del total operado', icon: 'cost' },
+          { label: 'Margen promedio', value: '14,8%', detail: 'Por unidad entregada', icon: 'profit' },
+        ],
+        '2026-07': [
+          { label: 'Ventas de Julio', value: '19 unidades', detail: '+2 vs. junio', icon: 'sales' },
+          { label: 'Facturado salón', value: 'USD 462.000', detail: 'USD 315.000 contado/anticipo', icon: 'sales' },
+          { label: 'Créditos prendarios', value: '11 aprobados', detail: '58% del total operado', icon: 'cost' },
+          { label: 'Margen promedio', value: '13,9%', detail: 'Por unidad entregada', icon: 'profit' },
+        ],
+        all: [
+          { label: 'Total Acumulado Q3', value: '46 unidades', detail: 'Julio – Septiembre 2026', icon: 'sales' },
+          { label: 'Facturado consolidado', value: 'USD 1.078.250', detail: '78% cobrado/acreditado', icon: 'sales' },
+          { label: 'Créditos prendarios', value: '28 aprobados', detail: 'Cartera prendaria activa', icon: 'cost' },
+          { label: 'Margen promedio Q3', value: '14,4%', detail: 'Promedio general del salón', icon: 'profit' },
+        ],
+      },
       sales: [
-        { id: 'op-2041', date: '19 ago 2026', buyer: 'Mariana Beltrán', item: 'Volkswagen Taos Highline', reference: '250TSI · 2023', amount: 'USD 30.900', acquisition: 'USD 26.500', costs: 'USD 320', net: 'USD 4.080', margin: '13,2%', status: 'Acreditado', method: 'Permuta HR-V + Transferencia', agent: 'Camila Rossi', receipt: 'Boleto de compraventa · mariana-beltran.pdf' },
-        { id: 'op-2040', date: '18 ago 2026', buyer: 'Martín Duhalde (AgroSur SRL)', item: 'Volkswagen Amarok V6 Extreme', reference: '3.0 TDI 4Motion · 2023', amount: 'USD 2.000 (Seña)', acquisition: 'USD 41.200', costs: 'USD 0', net: 'USD 2.000', margin: 'Seña reserva', status: 'Pendiente', method: 'Transferencia bancaria USD', agent: 'Lucas Benítez', receipt: 'Recibo provisorio de seña · agrosur-srl.pdf' },
-        { id: 'op-2039', date: '16 ago 2026', buyer: 'Facundo Castro', item: 'Toyota Hilux SRV 4x4', reference: '2.8 TDI AT · 2022', amount: 'USD 36.500', acquisition: 'USD 31.400', costs: 'USD 450', net: 'USD 4.650', margin: '12,7%', status: 'Acreditado', method: 'Crédito Santander + Anticipo', agent: 'Lucas Benítez', receipt: 'Liquidación prendaria · facundo-castro.pdf' },
-        { id: 'op-2038', date: '14 ago 2026', buyer: 'Gonzalo Peñaloza', item: 'Peugeot 208 Allure', reference: '1.6 VTi · 2023', amount: 'USD 15.800', acquisition: 'USD 13.600', costs: 'USD 280', net: 'USD 1.920', margin: '12,1%', status: 'Acreditado', method: 'Anticipo 60% + 24 cuotas UVA', agent: 'Camila Rossi', receipt: 'Acta de entrega · gonzalo-penaloza.pdf' },
+        // Septiembre 2026
+        { id: 'op-2045', monthKey: '2026-09', date: '06 sep 2026', buyer: 'Mariana Beltrán', item: 'Volkswagen Taos Highline', reference: '250TSI · 2023', amount: 'USD 30.900', acquisition: 'USD 26.500', costs: 'USD 320', net: 'USD 4.080', margin: '13,2%', status: 'Acreditado', method: 'Permuta HR-V + Transferencia', agent: 'Camila Rossi', receipt: 'Boleto de compraventa · mariana-beltran.pdf' },
+        { id: 'op-2044', monthKey: '2026-09', date: '05 sep 2026', buyer: 'Martín Duhalde (AgroSur SRL)', item: 'Volkswagen Amarok V6 Extreme', reference: '3.0 TDI 4Motion · 2023', amount: 'USD 2.000 (Seña)', acquisition: 'USD 41.200', costs: 'USD 0', net: 'USD 2.000', margin: 'Seña reserva', status: 'Pendiente', method: 'Transferencia bancaria Galicia USD', agent: 'Lucas Benítez', receipt: 'Recibo provisorio de seña · agrosur-srl.pdf' },
+        { id: 'op-2043', monthKey: '2026-09', date: '03 sep 2026', buyer: 'Esteban Morales', item: 'Toyota Hilux SRX 4x4', reference: '2.8 TDI AT · 2024', amount: 'USD 1.200 (Seña)', acquisition: 'USD 36.800', costs: 'USD 150', net: 'USD 1.200', margin: 'Seña turno', status: 'Acreditado', method: 'Transferencia Santander ARS', agent: 'Lucas Benítez', receipt: 'Comprobante Santander · esteban-morales.pdf' },
+        { id: 'op-2042', monthKey: '2026-09', date: '01 sep 2026', buyer: 'Valeria Gómez', item: 'Toyota Corolla Cross SEG', reference: '2.0 CVT · 2023', amount: 'USD 680 (Seña)', acquisition: 'USD 24.100', costs: 'USD 0', net: 'USD 680', margin: 'Seña congelamiento', status: 'Pendiente', method: 'Mercado Pago CVU', agent: 'Camila Rossi', receipt: 'Comprobante MP · valeria-gomez.pdf' },
+        // Agosto 2026
+        { id: 'op-2041', monthKey: '2026-08', date: '28 ago 2026', buyer: 'Ignacio Balcarce', item: 'Ford Ranger Limited 4x4', reference: '3.2 TDCi AT · 2022', amount: 'USD 39.500', acquisition: 'USD 34.100', costs: 'USD 420', net: 'USD 4.980', margin: '12,6%', status: 'Acreditado', method: 'Contado USD Transferencia', agent: 'Lucas Benítez', receipt: 'Boleto de compraventa · ignacio-balcarce.pdf' },
+        { id: 'op-2040', monthKey: '2026-08', date: '22 ago 2026', buyer: 'Laura Domínguez', item: 'Peugeot 208 Feline Tiptronic', reference: '1.6 VTi · 2023', amount: 'USD 17.500', acquisition: 'USD 14.900', costs: 'USD 210', net: 'USD 2.390', margin: '13,7%', status: 'Acreditado', method: 'Anticipo + 24 cuotas fijas', agent: 'Camila Rossi', receipt: 'Liquidación prendaria · laura-dominguez.pdf' },
+        { id: 'op-2039', monthKey: '2026-08', date: '16 ago 2026', buyer: 'Facundo Castro', item: 'Toyota Hilux SRV 4x4', reference: '2.8 TDI AT · 2022', amount: 'USD 36.500', acquisition: 'USD 31.400', costs: 'USD 450', net: 'USD 4.650', margin: '12,7%', status: 'Acreditado', method: 'Crédito Santander + Anticipo', agent: 'Lucas Benítez', receipt: 'Liquidación prendaria · facundo-castro.pdf' },
+        { id: 'op-2038', monthKey: '2026-08', date: '14 ago 2026', buyer: 'Gonzalo Peñaloza', item: 'Peugeot 208 Allure', reference: '1.6 VTi · 2023', amount: 'USD 15.800', acquisition: 'USD 13.600', costs: 'USD 280', net: 'USD 1.920', margin: '12,1%', status: 'Acreditado', method: 'Anticipo 60% + 24 cuotas UVA', agent: 'Camila Rossi', receipt: 'Acta de entrega · gonzalo-penaloza.pdf' },
+        // Julio 2026
+        { id: 'op-2035', monthKey: '2026-07', date: '29 jul 2026', buyer: 'Roberto Funes', item: 'Volkswagen Amarok Comfortline', reference: '2.0 TDI 4x2 · 2021', amount: 'USD 32.000', acquisition: 'USD 27.500', costs: 'USD 380', net: 'USD 4.120', margin: '12,9%', status: 'Acreditado', method: 'Transferencia Galicia USD', agent: 'Lucas Benítez', receipt: 'Boleto · roberto-funes.pdf' },
+        { id: 'op-2034', monthKey: '2026-07', date: '21 jul 2026', buyer: 'Claudia Varela', item: 'Jeep Renegade Longitude', reference: '1.8 AT6 · 2022', amount: 'USD 21.400', acquisition: 'USD 18.200', costs: 'USD 310', net: 'USD 2.890', margin: '13,5%', status: 'Acreditado', method: 'Permuta + 12 cuotas', agent: 'Camila Rossi', receipt: 'Boleto · claudia-varela.pdf' },
+        { id: 'op-2033', monthKey: '2026-07', date: '12 jul 2026', buyer: 'Matías Soria', item: 'Toyota Yaris XLS AT', reference: '1.5 5P · 2023', amount: 'USD 16.900', acquisition: 'USD 14.300', costs: 'USD 190', net: 'USD 2.410', margin: '14,3%', status: 'Acreditado', method: 'Contado transferencia', agent: 'Camila Rossi', receipt: 'Boleto · matias-soria.pdf' },
+        { id: 'op-2032', monthKey: '2026-07', date: '05 jul 2026', buyer: 'Transporte El Pampero SRL', item: 'Toyota Hilux DX 4x2', reference: '2.4 TDI · 2022', amount: 'USD 28.500', acquisition: 'USD 24.800', costs: 'USD 350', net: 'USD 3.350', margin: '11,8%', status: 'Acreditado', method: 'Factura A Transferencia BBVA', agent: 'Lucas Benítez', receipt: 'Factura A · el-pampero-srl.pdf' },
       ],
       credits: [
         { id: 'cred-1', bank: 'Banco Santander', client: 'Valeria Gómez', item: 'Toyota Corolla Cross', amount: 'USD 11.000', plan: '24 cuotas fijas', status: 'Pre-aprobado', rate: 'TNA 48%' },
@@ -138,10 +213,32 @@ export const verticalDemos = {
         { id: 'cred-3', bank: 'BBVA Francés', client: 'Agustín Pereyra', item: 'Peugeot 208 Feline', amount: 'USD 8.700', plan: '36 cuotas UVA', status: 'En scoring', rate: 'UVA + 7,5%' },
       ],
       agents: [
-        { name: 'Lucas Benítez', initials: 'LB', role: 'Especialista · Pickups y utilitarios', sales: '11', revenue: 'USD 294.000', conversion: '36%', commission: 'USD 5.880', progress: 92 },
-        { name: 'Camila Rossi', initials: 'CR', role: 'Especialista · SUVs y sedanes', sales: '8', revenue: 'USD 186.000', conversion: '29%', commission: 'USD 3.720', progress: 80 },
-        { name: 'Agente IA', initials: 'IA', role: 'Calificación, perfil 360° y Test Drives', sales: '—', revenue: '38 citas salón', conversion: '84% asistencia', commission: 'Automatizado', progress: 95 },
+        { name: 'Lucas Benítez', initials: 'LB', role: 'Especialista · Pickups y utilitarios', sales: '2', revenue: 'USD 38.300', conversion: '40%', commission: 'USD 766', progress: 45 },
+        { name: 'Camila Rossi', initials: 'CR', role: 'Especialista · SUVs y sedanes', sales: '2', revenue: 'USD 31.750', conversion: '33%', commission: 'USD 635', progress: 42 },
+        { name: 'Agente IA', initials: 'IA', role: 'Calificación, perfil 360° y Test Drives', sales: '—', revenue: '12 citas salón', conversion: '88% asistencia', commission: 'Automatizado', progress: 60 },
       ],
+      monthlyAgents: {
+        '2026-09': [
+          { name: 'Lucas Benítez', initials: 'LB', role: 'Especialista · Pickups y utilitarios', sales: '2', revenue: 'USD 38.300', conversion: '40%', commission: 'USD 766', progress: 45 },
+          { name: 'Camila Rossi', initials: 'CR', role: 'Especialista · SUVs y sedanes', sales: '2', revenue: 'USD 31.750', conversion: '33%', commission: 'USD 635', progress: 42 },
+          { name: 'Agente IA', initials: 'IA', role: 'Calificación, perfil 360° y Test Drives', sales: '—', revenue: '12 citas salón', conversion: '88% asistencia', commission: 'Automatizado', progress: 60 },
+        ],
+        '2026-08': [
+          { name: 'Lucas Benítez', initials: 'LB', role: 'Especialista · Pickups y utilitarios', sales: '11', revenue: 'USD 294.000', conversion: '36%', commission: 'USD 5.880', progress: 92 },
+          { name: 'Camila Rossi', initials: 'CR', role: 'Especialista · SUVs y sedanes', sales: '8', revenue: 'USD 186.000', conversion: '29%', commission: 'USD 3.720', progress: 80 },
+          { name: 'Agente IA', initials: 'IA', role: 'Calificación, perfil 360° y Test Drives', sales: '—', revenue: '38 citas salón', conversion: '84% asistencia', commission: 'Automatizado', progress: 95 },
+        ],
+        '2026-07': [
+          { name: 'Lucas Benítez', initials: 'LB', role: 'Especialista · Pickups y utilitarios', sales: '9', revenue: 'USD 248.000', conversion: '34%', commission: 'USD 4.960', progress: 85 },
+          { name: 'Camila Rossi', initials: 'CR', role: 'Especialista · SUVs y sedanes', sales: '7', revenue: 'USD 162.000', conversion: '27%', commission: 'USD 3.240', progress: 75 },
+          { name: 'Agente IA', initials: 'IA', role: 'Calificación, perfil 360° y Test Drives', sales: '—', revenue: '31 citas salón', conversion: '81% asistencia', commission: 'Automatizado', progress: 88 },
+        ],
+        all: [
+          { name: 'Lucas Benítez', initials: 'LB', role: 'Especialista · Pickups y utilitarios', sales: '22', revenue: 'USD 580.300', conversion: '35%', commission: 'USD 11.606', progress: 94 },
+          { name: 'Camila Rossi', initials: 'CR', role: 'Especialista · SUVs y sedanes', sales: '17', revenue: 'USD 379.750', conversion: '28%', commission: 'USD 7.595', progress: 82 },
+          { name: 'Agente IA', initials: 'IA', role: 'Calificación, perfil 360° y Test Drives', sales: '—', revenue: '81 citas salón', conversion: '83% asistencia', commission: 'Automatizado', progress: 96 },
+        ],
+      },
     },
     testDrives: [
       { id: 'td-1', client: 'Esteban Morales', time: 'Hoy · 15:30', vehicle: 'Toyota Hilux SRX 4x4', licenseStatus: 'Licencia validada', advisor: 'Lucas Benítez', tradeInScheduled: true, tradeInCar: 'Ford Ranger XLT 2018 (112.000 km)', status: 'Confirmado', showroomBay: 'Rampa 1 · Peritaje Mecánico' },

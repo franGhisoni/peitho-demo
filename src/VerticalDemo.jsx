@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import {
-  AlertTriangle, ArrowRight, BarChart3, Boxes, CalendarCheck, Car, ChevronRight, CircleDollarSign,
-  ClipboardList, Clock3, CreditCard, Gauge, KeyRound, LayoutDashboard, Menu, MessageCircle,
+  AlertTriangle, ArrowRight, BarChart3, Boxes, Calendar, CalendarCheck, Car, ChevronRight, CircleDollarSign,
+  ClipboardList, Clock3, CreditCard, Download, FileSpreadsheet, Gauge, KeyRound, LayoutDashboard, Menu, MessageCircle,
   Receipt, Search, Send, ShieldCheck, Sparkles, Ticket, TrendingUp, Users, Watch, X, WalletCards,
   Calculator, Wrench,
 } from 'lucide-react'
 import { verticalDemos } from './data/verticalDemoData'
 import { cn } from './lib/helpers'
+import { exportToExcel } from './lib/excelExport'
 import { EventsOperations } from './components/EventsOperations'
 import { AutoCustomerProfile } from './components/AutoCustomerProfile'
 import { AutoFinanceSimulator } from './components/AutoFinanceSimulator'
@@ -232,15 +233,208 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
   )
 }
 
-function Dashboard({ demo, leads, onNavigate, onOpenChat }) {
-  return <section className="mt-7 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{demo.dashboardCards.map((card) => { const Icon = iconMap[card.kind]; return <article key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-slate-500">{card.label}</p><strong className="mt-2 block text-3xl font-black tracking-tight">{card.value}</strong></div><span className="accent-soft grid size-10 place-items-center rounded-xl"><Icon size={19} /></span></div><p className="mt-4 text-xs font-semibold text-slate-500">{card.detail}</p></article> })}</div>
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(330px,.6fr)]">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><div><p className="accent-text text-xs font-black uppercase">Prioridad IA</p><h2 className="mt-1 text-xl font-black">Oportunidades que requieren acción</h2></div><button className="accent-button hidden rounded-xl px-3 py-2 text-xs font-black sm:block" onClick={() => onNavigate('pipeline')}>Ver pipeline</button></div><div className="mt-5 grid gap-2">{leads.slice().sort((a,b)=>b.score-a.score).slice(0,4).map(lead=><button key={lead.id} onClick={()=>onOpenChat(lead)} className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3 text-left hover:border-slate-300 hover:bg-slate-50"><span className="accent-soft grid size-10 shrink-0 place-items-center rounded-full text-xs font-black">{lead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{lead.name}</strong><span className="block truncate text-xs text-slate-500">{lead.nextAction}</span></span><span className="text-sm font-black text-emerald-600">{lead.score}</span><ChevronRight size={16} className="text-slate-300 group-hover:text-slate-700" /></button>)}</div></section>
-      <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Actividad en vivo</p><h2 className="mt-1 text-xl font-black">Últimos movimientos</h2></div><span className="accent-soft grid size-10 place-items-center rounded-xl"><Clock3 size={18} /></span></div><div className="mt-5 grid gap-4">{leads.slice(0,3).map((lead,index)=><div className="relative flex gap-3" key={lead.id}><span className="accent-bg mt-1.5 size-2 shrink-0 rounded-full" /><div className="min-w-0"><p className="text-sm font-bold">{demo.key==='relojes' ? ['Stock confirmado','Precio comparado','Seguimiento programado'][index] : demo.key==='autos' ? ['Test Drive coordinado', 'Ficha 360° completada', 'Seña registrada en salón'][index] : ['Cupo confirmado','Checkout detectado','Recordatorio programado'][index]}</p><p className="mt-0.5 truncate text-xs text-slate-500">{lead.name} · {lead.intent}</p><span className="mt-1 block text-[10px] font-bold text-slate-400">{lead.lastContact}</span></div></div>)}</div><button className="accent-text mt-5 text-xs font-black" onClick={() => onNavigate('chats')}>Ver conversaciones <ChevronRight size={14} className="inline" /></button></section>
+function MonthFilterSelect({ months, selectedMonth, onSelectMonth, label = 'Período' }) {
+  if (!months || months.length === 0) return null
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-500">
+        <Calendar size={14} className="text-blue-600" />
+        {label}:
+      </span>
+      <div className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-50/80 p-1 shadow-xs">
+        {months.map((m) => {
+          const active = selectedMonth === m.id
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onSelectMonth(m.id)}
+              className={cn(
+                'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-black transition cursor-pointer',
+                active
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-white hover:text-slate-900'
+              )}
+            >
+              {m.shortLabel || m.label}
+              {m.isCurrent && !active && (
+                <span className="size-1.5 rounded-full bg-blue-600" />
+              )}
+            </button>
+          )
+        })}
+      </div>
     </div>
-    <SmartAlerts demo={demo} />
-  </section>
+  )
+}
+
+function Dashboard({ demo, leads, onNavigate, onOpenChat }) {
+  const months = demo.months || [
+    { id: '2026-09', label: 'Septiembre 2026 (En curso)', shortLabel: 'Septiembre 2026', isCurrent: true },
+    { id: '2026-08', label: 'Agosto 2026', shortLabel: 'Agosto 2026' },
+    { id: '2026-07', label: 'Julio 2026', shortLabel: 'Julio 2026' },
+    { id: 'all', label: 'Todos los meses (Q3 Acumulado)', shortLabel: 'Todo Q3 2026' },
+  ]
+  const [selectedMonth, setSelectedMonth] = useState('2026-09')
+
+  const currentCards = useMemo(() => {
+    if (demo.monthlyDashboardCards && demo.monthlyDashboardCards[selectedMonth]) {
+      return demo.monthlyDashboardCards[selectedMonth]
+    }
+    return demo.dashboardCards
+  }, [demo, selectedMonth])
+
+  function exportDashboardExcel() {
+    const monthObj = months.find((m) => m.id === selectedMonth)
+    const monthLabel = monthObj ? monthObj.label : selectedMonth
+    const filename = `${demo.brand.replace(/\s+/g, '_')}_Dashboard_${selectedMonth}`
+
+    const sheets = [
+      {
+        name: 'Métricas Período',
+        data: currentCards.map((c) => ({
+          'Indicador': c.label,
+          'Valor': c.value,
+          'Detalle': c.detail,
+          'Período': monthLabel,
+        })),
+      },
+      {
+        name: 'Oportunidades Prioritarias',
+        data: leads.map((l) => ({
+          'Cliente': l.name,
+          'Teléfono': l.phone,
+          'Intención / Vehículo': l.intent,
+          'Presupuesto': l.budget,
+          'Score IA': l.score,
+          'Etapa CRM': l.stage,
+          'Origen': l.source,
+          'Asesor': l.owner,
+          'Último Contacto': l.lastContact,
+          'Próxima Acción': l.nextAction,
+        })),
+      },
+      {
+        name: 'Inventario y Aging',
+        data: (demo.items || []).map((item) => ({
+          'Vehículo / Item': item.title,
+          'Referencia': item.ref,
+          'Precio Publicado': item.price,
+          'Costo Adquisición': item.acquisition,
+          'Margen Est.': item.margin,
+          'Estado': item.status,
+          'Días en Salón (Aging)': item.inventoryDays,
+          'Consultas Recibidas': item.inquiries,
+          'Alerta Comercial': item.alert,
+        })),
+      },
+    ]
+
+    exportToExcel({ filename, sheets })
+  }
+
+  return (
+    <section className="mt-7 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
+      {/* Barra de Filtro de Mes y Exportación a Excel */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
+        <MonthFilterSelect
+          months={months}
+          selectedMonth={selectedMonth}
+          onSelectMonth={setSelectedMonth}
+          label="Período"
+        />
+
+        <button
+          type="button"
+          onClick={exportDashboardExcel}
+          className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-xs transition hover:bg-emerald-700 cursor-pointer"
+          title="Exportar métricas de salón, oportunidades y stock a planilla Excel"
+        >
+          <FileSpreadsheet size={16} />
+          <span>Exportar Dashboard a Excel</span>
+        </button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {currentCards.map((card) => {
+          const Icon = iconMap[card.kind] || Users
+          return (
+            <article key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-bold text-slate-500">{card.label}</p>
+                  <strong className="mt-2 block text-3xl font-black tracking-tight">{card.value}</strong>
+                </div>
+                <span className="accent-soft grid size-10 place-items-center rounded-xl">
+                  <Icon size={19} />
+                </span>
+              </div>
+              <p className="mt-4 text-xs font-semibold text-slate-500">{card.detail}</p>
+            </article>
+          )
+        })}
+      </div>
+
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(330px,.6fr)]">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="accent-text text-xs font-black uppercase">Prioridad IA</p>
+              <h2 className="mt-1 text-xl font-black">Oportunidades que requieren acción</h2>
+            </div>
+            <button className="accent-button hidden rounded-xl px-3 py-2 text-xs font-black sm:block" onClick={() => onNavigate('pipeline')}>
+              Ver pipeline
+            </button>
+          </div>
+          <div className="mt-5 grid gap-2">
+            {leads.slice().sort((a,b)=>b.score-a.score).slice(0,4).map(lead=>(
+              <button key={lead.id} onClick={()=>onOpenChat(lead)} className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3 text-left hover:border-slate-300 hover:bg-slate-50">
+                <span className="accent-soft grid size-10 shrink-0 place-items-center rounded-full text-xs font-black">
+                  {lead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <strong className="block truncate text-sm">{lead.name}</strong>
+                  <span className="block truncate text-xs text-slate-500">{lead.nextAction}</span>
+                </span>
+                <span className="text-sm font-black text-emerald-600">{lead.score}</span>
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-700" />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="accent-text text-xs font-black uppercase">Actividad en vivo</p>
+              <h2 className="mt-1 text-xl font-black">Últimos movimientos</h2>
+            </div>
+            <span className="accent-soft grid size-10 place-items-center rounded-xl">
+              <Clock3 size={18} />
+            </span>
+          </div>
+          <div className="mt-5 grid gap-4">
+            {leads.slice(0,3).map((lead,index)=>(
+              <div className="relative flex gap-3" key={lead.id}>
+                <span className="accent-bg mt-1.5 size-2 shrink-0 rounded-full" />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">
+                    {demo.key==='relojes' ? ['Stock confirmado','Precio comparado','Seguimiento programado'][index] : demo.key==='autos' ? ['Test Drive coordinado', 'Ficha 360° completada', 'Seña registrada en salón'][index] : ['Cupo confirmado','Checkout detectado','Recordatorio programado'][index]}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">{lead.name} · {lead.intent}</p>
+                  <span className="mt-1 block text-[10px] font-bold text-slate-400">{lead.lastContact}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="accent-text mt-5 text-xs font-black" onClick={() => onNavigate('chats')}>
+            Ver conversaciones <ChevronRight size={14} className="inline" />
+          </button>
+        </section>
+      </div>
+      <SmartAlerts demo={demo} />
+    </section>
+  )
 }
 
 function SmartAlerts({ demo }) {
@@ -619,87 +813,354 @@ function PriceLineChart({ compact = false, index = 0 }) {
 
 function BusinessFinance({ demo }) {
   const [selectedSale, setSelectedSale] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState('2026-09')
   const finance = demo.finance
   if (!finance) return null
 
-  return <section className="mt-7 grid gap-5">
-    <div className="rounded-2xl bg-[#101828] p-6 text-white">
-      <p className="accent-text text-xs font-black uppercase">Gestión financiera</p>
-      <h2 className="mt-2 text-2xl font-black">
-        {demo.key === 'autos' ? 'Ventas de salón, créditos prendarios y rentabilidad' : 'Ventas, pagos y rentabilidad del negocio'}
-      </h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-        {demo.key === 'autos'
-          ? 'Seguí cada boleto de compraventa, estado de scoring bancario prendario y rendimiento de los asesores de salón.'
-          : 'Seguí cada operación desde la reserva hasta el cobro, con margen real por unidad y rendimiento de cada agente.'}
-      </p>
-    </div>
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{finance.summary.map((card) => <FinanceMetric key={card.label} icon={card.icon === 'sales' ? TrendingUp : card.icon === 'pending' ? Clock3 : card.icon === 'cost' ? CreditCard : CircleDollarSign} label={card.label} value={card.value} detail={card.detail} />)}</div>
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.6fr)]">
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5"><div><p className="accent-text text-xs font-black uppercase">Historial de ventas</p><h3 className="mt-1 text-xl font-black">{demo.key === 'autos' ? 'Boletos y operaciones de salón' : 'Operaciones recientes'}</h3></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">{finance.sales.length} operaciones</span></div>
-        <div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-sm"><thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400"><tr><th className="p-4">Fecha / comprador</th><th className="p-4">{demo.key === 'autos' ? 'Vehículo' : demo.key === 'relojes' ? 'Reloj' : 'Item'}</th><th className="p-4">Importe</th><th className="p-4">Pago</th><th className="p-4">Asesor</th><th className="p-4">Acción</th></tr></thead><tbody>{finance.sales.map((sale) => <tr key={sale.id} className="border-t border-slate-100"><td className="p-4"><strong>{sale.date}</strong><span className="block text-xs text-slate-400">{sale.buyer}</span></td><td className="p-4"><strong className="block">{sale.item}</strong><span className="text-xs text-slate-400">{sale.reference}</span></td><td className="p-4"><strong>{sale.amount}</strong><span className="block text-xs text-emerald-600">Neto {sale.net}</span></td><td className="p-4"><span className={cn('rounded-full px-2 py-1 text-[11px] font-black', sale.status === 'Acreditado' ? 'bg-emerald-50 text-emerald-700' : sale.status === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600')}>{sale.status}</span><span className="mt-1 block text-xs text-slate-400">{sale.method}</span></td><td className="p-4 font-semibold">{sale.agent}</td><td className="p-4"><button className="accent-text whitespace-nowrap text-xs font-black" onClick={() => setSelectedSale(sale)}>{selectedSale?.id === sale.id ? 'Seleccionado' : 'Ver detalle'} <ChevronRight size={14} className="inline" /></button></td></tr>)}</tbody></table></div>
-        {selectedSale && <div className="border-t border-slate-200 bg-slate-50 p-5"><div className="flex items-start justify-between gap-3"><div><p className="accent-text text-[10px] font-black uppercase">Detalle de operación · {selectedSale.id}</p><h4 className="mt-1 text-lg font-black">{selectedSale.item} para {selectedSale.buyer}</h4></div><button className="text-xs font-black text-slate-400" onClick={() => setSelectedSale(null)}>Cerrar</button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><Info label="Adquisición" value={selectedSale.acquisition}/><Info label="Precio de venta" value={selectedSale.amount}/><Info label="Costos" value={selectedSale.costs}/><Info label="Margen neto" value={selectedSale.margin}/></div><div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"><div><p className="text-xs font-black">Comprobante y liquidación</p><p className="mt-1 text-xs text-slate-500">{selectedSale.receipt}</p></div><button className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black hover:bg-slate-50">Ver comprobante</button></div></div>}
-      </section>
+  const months = demo.months || [
+    { id: '2026-09', label: 'Septiembre 2026 (En curso)', shortLabel: 'Septiembre 2026', isCurrent: true },
+    { id: '2026-08', label: 'Agosto 2026', shortLabel: 'Agosto 2026' },
+    { id: '2026-07', label: 'Julio 2026', shortLabel: 'Julio 2026' },
+    { id: 'all', label: 'Todos los meses (Q3 Acumulado)', shortLabel: 'Todo Q3 2026' },
+  ]
 
-      {demo.key === 'autos' && finance.credits ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="accent-text text-xs font-black uppercase">Créditos Prendarios</p>
-              <h3 className="mt-1 text-xl font-black">Scoring bancario en vivo</h3>
-            </div>
-            <CreditCard className="text-slate-300" size={19} />
+  const currentSummary = useMemo(() => {
+    if (finance.monthlySummaries && finance.monthlySummaries[selectedMonth]) {
+      return finance.monthlySummaries[selectedMonth]
+    }
+    return finance.summary
+  }, [finance, selectedMonth])
+
+  const filteredSales = useMemo(() => {
+    if (selectedMonth === 'all') return finance.sales
+    return finance.sales.filter(
+      (s) => s.monthKey === selectedMonth || (!s.monthKey && selectedMonth === '2026-08')
+    )
+  }, [finance.sales, selectedMonth])
+
+  const currentAgents = useMemo(() => {
+    if (finance.monthlyAgents && finance.monthlyAgents[selectedMonth]) {
+      return finance.monthlyAgents[selectedMonth]
+    }
+    return finance.agents
+  }, [finance, selectedMonth])
+
+  function exportFinanceExcel() {
+    const monthObj = months.find((m) => m.id === selectedMonth)
+    const monthLabel = monthObj ? monthObj.label : selectedMonth
+    const filename = `${demo.brand.replace(/\s+/g, '_')}_Reporte_Financiero_${selectedMonth}`
+
+    const sheets = [
+      {
+        name: 'Ventas y Boletos',
+        data: filteredSales.map((s) => ({
+          'N° Operación': s.id,
+          'Fecha': s.date,
+          'Comprador': s.buyer,
+          'Vehículo / Item': s.item,
+          'Versión / Ref': s.reference,
+          'Importe Total': s.amount,
+          'Costo Adquisición': s.acquisition,
+          'Gastos Directos': s.costs,
+          'Margen Neto': s.net,
+          '% Margen': s.margin,
+          'Estado Pago': s.status,
+          'Medio de Pago': s.method,
+          'Asesor Comercial': s.agent,
+        })),
+      },
+      {
+        name: 'Resumen Ejecutivo',
+        data: currentSummary.map((card) => ({
+          'Indicador': card.label,
+          'Valor': card.value,
+          'Detalle': card.detail,
+          'Período': monthLabel,
+        })),
+      },
+      {
+        name: 'Equipo Comercial',
+        data: currentAgents.map((ag) => ({
+          'Asesor': ag.name,
+          'Especialidad': ag.role,
+          'Ventas Cerradas': ag.sales,
+          'Facturado': ag.revenue,
+          'Tasa Conversión': ag.conversion,
+          'Comisión': ag.commission,
+          'Avance de Meta': `${ag.progress}%`,
+        })),
+      },
+      ...(finance.credits
+        ? [
+            {
+              name: 'Créditos Prendarios',
+              data: finance.credits.map((cr) => ({
+                'N° Solicitud': cr.id,
+                'Banco Entidad': cr.bank,
+                'Comprador': cr.client,
+                'Vehículo': cr.item,
+                'Monto Solicitado': cr.amount,
+                'Plan Cuotas': cr.plan,
+                'Tasa Pactada': cr.rate,
+                'Estado Scoring': cr.status,
+              })),
+            },
+          ]
+        : []),
+    ]
+
+    exportToExcel({ filename, sheets })
+  }
+
+  return (
+    <section className="mt-7 grid gap-5">
+      <div className="rounded-2xl bg-[#101828] p-6 text-white shadow-md">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="accent-text text-xs font-black uppercase">Gestión financiera & Tesorería</p>
+            <h2 className="mt-2 text-2xl font-black">
+              {demo.key === 'autos' ? 'Ventas de salón, créditos prendarios y rentabilidad' : 'Ventas, pagos y rentabilidad del negocio'}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+              {demo.key === 'autos'
+                ? 'Seguí cada boleto de compraventa, estado de scoring bancario prendario y rendimiento de los asesores de salón.'
+                : 'Seguí cada operación desde la reserva hasta el cobro, con margen real por unidad y rendimiento de cada agente.'}
+            </p>
           </div>
-          <div className="mt-5 grid gap-3">
-            {finance.credits.map((cred) => (
-              <div key={cred.id} className="rounded-xl border border-slate-100 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <strong className="text-sm font-black">{cred.bank}</strong>
-                  <span className={cn('rounded-full px-2 py-0.5 text-xs font-black', cred.status === 'Pre-aprobado' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')}>
-                    {cred.status}
-                  </span>
+
+          <button
+            type="button"
+            onClick={exportFinanceExcel}
+            className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 cursor-pointer shrink-0 self-start md:self-center"
+            title="Descargar libro contable y financiero en formato Excel (.xlsx)"
+          >
+            <FileSpreadsheet size={16} />
+            <span>Exportar Reporte a Excel</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Selector de Mes */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
+        <MonthFilterSelect
+          months={months}
+          selectedMonth={selectedMonth}
+          onSelectMonth={setSelectedMonth}
+          label="Período contable"
+        />
+
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+          <span>Mostrando:</span>
+          <strong className="text-slate-900">{filteredSales.length} operaciones</strong>
+          <span>en {months.find(m => m.id === selectedMonth)?.shortLabel || selectedMonth}</span>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {currentSummary.map((card) => (
+          <FinanceMetric
+            key={card.label}
+            icon={card.icon === 'sales' ? TrendingUp : card.icon === 'pending' ? Clock3 : card.icon === 'cost' ? CreditCard : CircleDollarSign}
+            label={card.label}
+            value={card.value}
+            detail={card.detail}
+          />
+        ))}
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.6fr)]">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5">
+            <div>
+              <p className="accent-text text-xs font-black uppercase">Historial de ventas</p>
+              <h3 className="mt-1 text-xl font-black">
+                {demo.key === 'autos' ? 'Boletos y operaciones de salón' : 'Operaciones recientes'}
+              </h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">
+                {filteredSales.length} operaciones
+              </span>
+              <button
+                type="button"
+                onClick={exportFinanceExcel}
+                className="hidden sm:flex items-center gap-1 text-xs font-black text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                title="Exportar esta tabla a Excel"
+              >
+                <Download size={13} />
+                Excel
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[820px] text-left text-sm">
+              <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                <tr>
+                  <th className="p-4">Fecha / comprador</th>
+                  <th className="p-4">{demo.key === 'autos' ? 'Vehículo' : demo.key === 'relojes' ? 'Reloj' : 'Item'}</th>
+                  <th className="p-4">Importe</th>
+                  <th className="p-4">Pago</th>
+                  <th className="p-4">Asesor</th>
+                  <th className="p-4">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSales.map((sale) => (
+                  <tr key={sale.id} className="border-t border-slate-100">
+                    <td className="p-4">
+                      <strong>{sale.date}</strong>
+                      <span className="block text-xs text-slate-400">{sale.buyer}</span>
+                    </td>
+                    <td className="p-4">
+                      <strong className="block">{sale.item}</strong>
+                      <span className="text-xs text-slate-400">{sale.reference}</span>
+                    </td>
+                    <td className="p-4">
+                      <strong>{sale.amount}</strong>
+                      <span className="block text-xs text-emerald-600">Neto {sale.net}</span>
+                    </td>
+                    <td className="p-4">
+                      <span className={cn('rounded-full px-2 py-1 text-[11px] font-black', sale.status === 'Acreditado' ? 'bg-emerald-50 text-emerald-700' : sale.status === 'Pendiente' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600')}>
+                        {sale.status}
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-400">{sale.method}</span>
+                    </td>
+                    <td className="p-4 font-semibold">{sale.agent}</td>
+                    <td className="p-4">
+                      <button className="accent-text whitespace-nowrap text-xs font-black cursor-pointer" onClick={() => setSelectedSale(sale)}>
+                        {selectedSale?.id === sale.id ? 'Seleccionado' : 'Ver detalle'} <ChevronRight size={14} className="inline" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {selectedSale && (
+            <div className="border-t border-slate-200 bg-slate-50 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="accent-text text-[10px] font-black uppercase">Detalle de operación · {selectedSale.id}</p>
+                  <h4 className="mt-1 text-lg font-black">{selectedSale.item} para {selectedSale.buyer}</h4>
                 </div>
-                <p className="mt-1 text-xs font-semibold text-slate-700">{cred.client} · {cred.item}</p>
-                <div className="mt-2 flex justify-between text-xs text-slate-500">
-                  <span>{cred.plan} ({cred.rate})</span>
-                  <strong className="text-slate-900 font-bold">{cred.amount}</strong>
+                <button className="text-xs font-black text-slate-400 cursor-pointer" onClick={() => setSelectedSale(null)}>
+                  Cerrar
+                </button>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                <Info label="Adquisición" value={selectedSale.acquisition}/>
+                <Info label="Precio de venta" value={selectedSale.amount}/>
+                <Info label="Costos" value={selectedSale.costs}/>
+                <Info label="Margen neto" value={selectedSale.margin}/>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                <div>
+                  <p className="text-xs font-black">Comprobante y liquidación</p>
+                  <p className="mt-1 text-xs text-slate-500">{selectedSale.receipt}</p>
+                </div>
+                <button className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black hover:bg-slate-50 cursor-pointer">
+                  Ver comprobante
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {demo.key === 'autos' && finance.credits ? (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="accent-text text-xs font-black uppercase">Créditos Prendarios</p>
+                <h3 className="mt-1 text-xl font-black">Scoring bancario en vivo</h3>
+              </div>
+              <CreditCard className="text-slate-300" size={19} />
+            </div>
+            <div className="mt-5 grid gap-3">
+              {finance.credits.map((cred) => (
+                <div key={cred.id} className="rounded-xl border border-slate-100 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <strong className="text-sm font-black">{cred.bank}</strong>
+                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-black', cred.status === 'Pre-aprobado' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')}>
+                      {cred.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-slate-700">{cred.client} · {cred.item}</p>
+                  <div className="mt-2 flex justify-between text-xs text-slate-500">
+                    <span>{cred.plan} ({cred.rate})</span>
+                    <strong className="text-slate-900 font-bold">{cred.amount}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="accent-text text-xs font-black uppercase">Pagos</p>
+                <h3 className="mt-1 text-xl font-black">Últimos movimientos</h3>
+              </div>
+              <WalletCards className="text-slate-300" size={19} />
+            </div>
+            <div className="mt-5 grid gap-3">
+              {finance.payments?.map((payment) => (
+                <div key={payment.id} className="rounded-xl border border-slate-100 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <strong className="text-sm">{payment.label}</strong>
+                    <span className={cn('text-xs font-black', payment.status === 'Acreditado' ? 'text-emerald-600' : 'text-amber-600')}>
+                      {payment.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">{payment.detail}</p>
+                  <div className="mt-2 flex justify-between text-xs">
+                    <span className="text-slate-400">{payment.date}</span>
+                    <strong>{payment.amount}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="accent-text text-xs font-black uppercase">Equipo comercial</p>
+            <h3 className="mt-1 text-xl font-black">Agentes de ventas</h3>
+          </div>
+          <span className="text-xs font-bold text-slate-400">
+            {months.find((m) => m.id === selectedMonth)?.shortLabel || 'Período'}
+          </span>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {currentAgents.map((agent) => (
+            <article key={agent.name} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div className="flex items-center gap-3">
+                <span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">
+                  {agent.initials}
+                </span>
+                <div>
+                  <strong className="block text-sm">{agent.name}</strong>
+                  <span className="text-xs text-slate-500">{agent.role}</span>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
-      ) : (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="accent-text text-xs font-black uppercase">Pagos</p>
-              <h3 className="mt-1 text-xl font-black">Últimos movimientos</h3>
-            </div>
-            <WalletCards className="text-slate-300" size={19} />
-          </div>
-          <div className="mt-5 grid gap-3">
-            {finance.payments?.map((payment) => (
-              <div key={payment.id} className="rounded-xl border border-slate-100 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <strong className="text-sm">{payment.label}</strong>
-                  <span className={cn('text-xs font-black', payment.status === 'Acreditado' ? 'text-emerald-600' : 'text-amber-600')}>
-                    {payment.status}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-slate-500">{payment.detail}</p>
-                <div className="mt-2 flex justify-between text-xs">
-                  <span className="text-slate-400">{payment.date}</span>
-                  <strong>{payment.amount}</strong>
-                </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <Info label="Ventas cerradas" value={agent.sales} />
+                <Info label="Facturado" value={agent.revenue} />
+                <Info label="Conversión" value={agent.conversion} />
+                <Info label="Comisión" value={agent.commission} />
               </div>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><p className="accent-text text-xs font-black uppercase">Equipo comercial</p><h3 className="mt-1 text-xl font-black">Agentes de ventas</h3></div><span className="text-xs font-bold text-slate-400">Este mes</span></div><div className="mt-5 grid gap-3 md:grid-cols-3">{finance.agents.map((agent) => <article key={agent.name} className="rounded-xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">{agent.initials}</span><div><strong className="block text-sm">{agent.name}</strong><span className="text-xs text-slate-500">{agent.role}</span></div></div><div className="mt-4 grid grid-cols-2 gap-3"><Info label="Ventas cerradas" value={agent.sales}/><Info label="Facturado" value={agent.revenue}/><Info label="Conversión" value={agent.conversion}/><Info label="Comisión" value={agent.commission}/></div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="accent-bg h-full rounded-full" style={{ width: `${agent.progress}%` }}/></div><p className="mt-2 text-[10px] font-bold text-slate-400">{agent.progress}% del objetivo mensual</p></article>)}</div></section>
-  </section>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                <div className="accent-bg h-full rounded-full" style={{ width: `${agent.progress}%` }} />
+              </div>
+              <p className="mt-2 text-[10px] font-bold text-slate-400">{agent.progress}% del objetivo del período</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </section>
+  )
 }
 
 function FinanceMetric({ icon: Icon, label, value, detail }) {
