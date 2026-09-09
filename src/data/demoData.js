@@ -316,7 +316,7 @@ export const advisors = [
     zone: 'Belgrano / Nunez',
     seniority: '6 anos',
     phone: '+54 9 11 6123-4500',
-    email: 'lucia@peitho.demo',
+    email: 'lucia@si.demo',
     status: 'Top performer',
     leadIds: ['lead-sofia', 'lead-valentina', 'lead-hernan'],
     metrics: {
@@ -358,7 +358,7 @@ export const advisors = [
     zone: 'Colegiales / Chacarita / Villa Crespo',
     seniority: '4 anos',
     phone: '+54 9 11 6988-2341',
-    email: 'tomas@peitho.demo',
+    email: 'tomas@si.demo',
     status: 'Pipeline alto',
     leadIds: ['lead-diego', 'lead-ricardo'],
     metrics: {
@@ -400,7 +400,7 @@ export const advisors = [
     zone: 'Vicente Lopez / Zona norte',
     seniority: '8 anos',
     phone: '+54 9 11 5201-7742',
-    email: 'martina@peitho.demo',
+    email: 'martina@si.demo',
     status: 'Lider de captaciones',
     leadIds: ['lead-carolina'],
     metrics: {
@@ -442,7 +442,7 @@ export const advisors = [
     zone: 'Palermo / Caballito',
     seniority: '2 anos',
     phone: '+54 9 11 4900-1188',
-    email: 'ramiro@peitho.demo',
+    email: 'ramiro@si.demo',
     status: 'Alta actividad',
     leadIds: ['lead-martin', 'lead-julieta'],
     metrics: {

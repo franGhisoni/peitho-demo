@@ -1,6 +1,6 @@
 // Compact data used by the door-control view. Keep this payload separate from
 // the component so it can be shared by the route and the event operations view.
-export const GUARD_ATTENDANCE_STORAGE_KEY = 'peitho:guard-attendance'
+export const GUARD_ATTENDANCE_STORAGE_KEY = 'si:guard-attendance'
 
 export const guardEvents = [
   {

@@ -1,8 +1,8 @@
 export const storageKeys = {
-  leads: 'peitho-react-demo-leads-v2',
-  logo: 'peitho-react-demo-logo',
-  agency: 'peitho-react-demo-agency',
-  botSchedule: 'peitho-react-demo-bot-schedule',
+  leads: 'si-react-demo-leads-v2',
+  logo: 'si-react-demo-logo',
+  agency: 'si-react-demo-agency',
+  botSchedule: 'si-react-demo-bot-schedule',
 }
 
 export const defaultBotSchedule = {

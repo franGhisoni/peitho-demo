@@ -22,7 +22,7 @@ function OriginalDemo() {
   const [selectedLeadId, setSelectedLeadId] = useState(() => initialLeads[0]?.id)
   const [selectedAdvisorId, setSelectedAdvisorId] = useState(() => advisors[0]?.id)
   const [logo, setLogo] = useState(() => localStorage.getItem(storageKeys.logo) || '')
-  const [agency, setAgency] = useState(() => localStorage.getItem(storageKeys.agency) || 'Peitho Realty')
+  const [agency, setAgency] = useState(() => localStorage.getItem(storageKeys.agency) || 'SI Realty')
   const [botSchedule, setBotSchedule] = useState(() => loadJson(storageKeys.botSchedule, defaultBotSchedule))
   const [draft, setDraft] = useState('')
   const [query, setQuery] = useState('')

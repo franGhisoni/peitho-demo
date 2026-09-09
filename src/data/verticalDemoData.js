@@ -1,7 +1,7 @@
 export const verticalDemos = {
   relojes: {
     key: 'relojes',
-    brand: 'Peitho Watches',
+    brand: 'SI Watches',
     eyebrow: 'CRM + inteligencia de mercado',
     accent: 'amber',
     itemLabel: 'Relojes',
@@ -68,7 +68,7 @@ export const verticalDemos = {
   },
   eventos: {
     key: 'eventos',
-    brand: 'Peitho Tickets',
+    brand: 'SI Tickets',
     eyebrow: 'CRM + venta conversacional',
     accent: 'violet',
     itemLabel: 'Eventos',

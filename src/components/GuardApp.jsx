@@ -121,7 +121,7 @@ export function GuardApp({ events = guardEvents, onExit, onAttendanceChange }) {
           <div className="flex min-w-0 items-center gap-3">
             {onExit ? <button onClick={onExit} aria-label="Volver" className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50"><ArrowLeft size={17} /></button> : null}
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-600 text-white shadow-sm"><ShieldCheck size={20} /></div>
-            <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[.16em] text-violet-600">Peitho Tickets</p><h1 className="truncate text-base font-black">Control de acceso</h1></div>
+            <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[.16em] text-violet-600">SI Tickets</p><h1 className="truncate text-base font-black">Control de acceso</h1></div>
           </div>
           <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1.5 text-[10px] font-black text-emerald-700"><i className="size-1.5 rounded-full bg-emerald-500" /> Guardia activo</span>
         </div>

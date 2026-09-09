@@ -37,7 +37,7 @@ export function DashboardView({ leads, metrics, onOpenPipeline }) {
     const monthLabel = monthObj ? monthObj.label : selectedMonth
 
     exportToExcel({
-      filename: `Peitho_Realty_Dashboard_${selectedMonth}`,
+      filename: `SI_Realty_Dashboard_${selectedMonth}`,
       sheets: [
         {
           name: 'Métricas Período',
