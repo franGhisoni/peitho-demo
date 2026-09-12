@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle, ArrowRight, BarChart3, Boxes, Calendar, CalendarCheck, Car, ChevronRight, CircleDollarSign,
-  ClipboardList, Clock3, CreditCard, Download, FileSpreadsheet, Gauge, KeyRound, LayoutDashboard, Menu, MessageCircle,
+  ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileSpreadsheet, Gauge, KeyRound, LayoutDashboard, Menu, MessageCircle,
   Receipt, Search, Send, ShieldCheck, Sparkles, Ticket, TrendingUp, Users, Watch, X, WalletCards,
   Calculator, Wrench,
 } from 'lucide-react'
@@ -14,6 +14,8 @@ import { AutoFinanceSimulator } from './components/AutoFinanceSimulator'
 import { AutoTestDriveView } from './components/AutoTestDriveView'
 import { AutoTransfersView } from './components/AutoTransfersView'
 import { AutoTransferReceiptModal } from './components/AutoTransferReceiptModal'
+import { AutoSaleClosingView } from './components/AutoSaleClosingView'
+import { AutoSaleClosingModal, OfficialBoletoView } from './components/AutoSaleClosingModal'
 
 const iconMap = { users: Users, stock: Boxes, trend: TrendingUp, alert: AlertTriangle, car: Car }
 
@@ -22,7 +24,10 @@ export function VerticalDemo({ type }) {
   const [section, setSection] = useState('dashboard')
   const [leads, setLeads] = useState(demo.leads)
   const [transfers, setTransfers] = useState(demo.transfers || [])
+  const [sales, setSales] = useState(demo.finance?.sales || [])
   const [activeReceipt, setActiveReceipt] = useState(null)
+  const [closingLead, setClosingLead] = useState(null)
+  const [viewingBoleto, setViewingBoleto] = useState(null)
   const [selectedId, setSelectedId] = useState(demo.leads[0].id)
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
@@ -119,6 +124,30 @@ export function VerticalDemo({ type }) {
     )
   }
 
+  function handleConfirmSale(saleRecord) {
+    setSales((prev) => [saleRecord, ...prev])
+    const clientFirstName = saleRecord.buyer.split(' ')[0]
+    const confirmationMessage = {
+      from: 'agent',
+      text: `🎉 ¡Operación cerrada formalmente, ${clientFirstName}! Se emitió el Boleto Oficial de Compraventa N° ${saleRecord.id} por el ${saleRecord.item}. Monto total convenido: ${saleRecord.amount}. La unidad queda reservada para su entrega en nuestro salón el ${saleRecord.details?.deliveryDate || 'día pactado'}. ¡Muchas gracias por confiar en SI Motors!`,
+      time: 'Ahora',
+      saleBoleto: saleRecord,
+    }
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === saleRecord.details?.leadId || l.name === saleRecord.buyer
+          ? {
+              ...l,
+              stage: 'entregado',
+              status: 'Venta Cerrada',
+              messages: [...l.messages, confirmationMessage],
+              lastContact: 'Ahora',
+            }
+          : l
+      )
+    )
+  }
+
   const nav = [
     ['dashboard', 'Dashboard', LayoutDashboard],
     ['pipeline', demo.pipelineLabel, Users],
@@ -135,6 +164,7 @@ export function VerticalDemo({ type }) {
     ...(type === 'autos' ? [
       ['testdrive', 'Test Drive & Peritaje', CalendarCheck],
       ['transfers', 'Control de Transferencias', Receipt],
+      ['closing', 'Cierre de Venta', FileCheck2],
       ['finance', 'Finanzas & Ventas', WalletCards],
     ] : []),
   ]
@@ -159,7 +189,17 @@ export function VerticalDemo({ type }) {
           </header>
 
           {section === 'dashboard' && <Dashboard demo={demo} leads={leads} onNavigate={navigate} onOpenChat={openChat} />}
-          {section === 'pipeline' && <Pipeline demo={demo} leads={leads} selectedId={selectedId} onAdvance={advance} onOpenChat={openChat} onSelect={setSelectedId} />}
+          {section === 'pipeline' && (
+            <Pipeline
+              demo={demo}
+              leads={leads}
+              selectedId={selectedId}
+              onAdvance={advance}
+              onOpenChat={openChat}
+              onSelect={setSelectedId}
+              onOpenClosingModal={(lead) => setClosingLead(lead)}
+            />
+          )}
           {section === 'chats' && (
             <Chats
               demo={demo}
@@ -172,12 +212,14 @@ export function VerticalDemo({ type }) {
               onViewReceipt={setActiveReceipt}
               onConfirmTransfer={confirmTransfer}
               onSimulateTransfer={simulateClientTransfer}
+              onOpenClosingModal={(lead) => setClosingLead(lead)}
+              onViewBoleto={(sale) => setViewingBoleto(sale)}
             />
           )}
           {section === 'inventory' && <Inventory demo={demo} items={filteredItems} query={query} onQuery={setQuery} />}
           {section === 'market' && (type === 'relojes' ? <WatchMarket demo={demo} /> : <Payments demo={demo} leads={leads} />)}
           {section === 'operations' && type === 'eventos' && <EventsOperations demo={demo} leads={leads} />}
-          {section === 'finance' && <BusinessFinance demo={demo} />}
+          {section === 'finance' && <BusinessFinance demo={demo} sales={sales} />}
           {section === 'testdrive' && type === 'autos' && <AutoTestDriveView demo={demo} leads={leads} onOpenChat={openChat} />}
           {section === 'transfers' && type === 'autos' && (
             <AutoTransfersView
@@ -188,6 +230,16 @@ export function VerticalDemo({ type }) {
               onOpenChat={openChat}
             />
           )}
+          {section === 'closing' && type === 'autos' && (
+            <AutoSaleClosingView
+              demo={demo}
+              leads={leads}
+              sales={sales}
+              onOpenChat={openChat}
+              onOpenClosingModal={(lead) => setClosingLead(lead)}
+              onViewBoleto={(sale) => setViewingBoleto(sale)}
+            />
+          )}
         </main>
       </div>
       {activeReceipt && (
@@ -196,6 +248,21 @@ export function VerticalDemo({ type }) {
           onClose={() => setActiveReceipt(null)}
           onConfirm={confirmTransfer}
         />
+      )}
+      {closingLead && (
+        <AutoSaleClosingModal
+          lead={closingLead}
+          demo={demo}
+          onClose={() => setClosingLead(null)}
+          onConfirmSale={handleConfirmSale}
+        />
+      )}
+      {viewingBoleto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3 sm:p-5 backdrop-blur-xs">
+          <div className="relative max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+            <OfficialBoletoView boleto={viewingBoleto} onClose={() => setViewingBoleto(null)} />
+          </div>
+        </div>
       )}
     </div>
   )
@@ -222,9 +289,12 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
         {demo.key === 'eventos' && <a href="/eventos/app" className="mt-4 rounded-xl bg-violet-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-violet-700">Abrir app de control de acceso</a>}
         {demo.key === 'autos' && (
           <div className="mt-4 flex flex-col gap-2">
-            <button onClick={() => onNavigate('testdrive')} className="rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700">Ver agenda de Test Drive</button>
-            <button onClick={() => onNavigate('transfers')} className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-950/40 px-3 py-2 text-center text-xs font-bold text-blue-200 hover:bg-blue-900/60 transition">
+            <button onClick={() => onNavigate('testdrive')} className="rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700 cursor-pointer">Ver agenda de Test Drive</button>
+            <button onClick={() => onNavigate('transfers')} className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-950/40 px-3 py-2 text-center text-xs font-bold text-blue-200 hover:bg-blue-900/60 transition cursor-pointer">
               <Receipt size={14} /> Control de Transferencias
+            </button>
+            <button onClick={() => onNavigate('closing')} className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-center text-xs font-black text-white hover:bg-emerald-700 transition cursor-pointer">
+              <FileCheck2 size={14} /> Cierre de Venta
             </button>
           </div>
         )}
@@ -441,9 +511,9 @@ function SmartAlerts({ demo }) {
   return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3"><span className="accent-soft grid size-10 place-items-center rounded-xl"><AlertTriangle size={18}/></span><div><p className="accent-text text-xs font-black uppercase">Alertas inteligentes</p><h2 className="text-xl font-black">{demo.key === 'autos' ? 'Decisiones de salón y rotación de stock' : 'Decisiones sugeridas'}</h2></div></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{demo.items.map(item=><article className="rounded-xl border border-slate-100 bg-slate-50 p-3" key={item.id}><div className="flex items-start justify-between gap-2"><strong className="text-sm">{item.title}</strong><span className="accent-bg mt-1 size-2 shrink-0 rounded-full"/></div><p className="mt-2 text-xs leading-5 text-slate-600">{item.alert}</p></article>)}</div></section>
 }
 
-function Pipeline({ demo, leads, selectedId, onAdvance, onOpenChat, onSelect }) {
+function Pipeline({ demo, leads, selectedId, onAdvance, onOpenChat, onSelect, onOpenClosingModal }) {
   const selected = leads.find(l=>l.id===selectedId)
-  return <section className="mt-7 grid gap-5"><div className="flex gap-3 overflow-x-auto pb-2">{demo.stages.map(stage=><div key={stage.id} className="w-[270px] shrink-0 rounded-2xl border border-slate-200 bg-slate-100/60 p-3"><div className="flex items-center justify-between px-1 py-2"><strong className="text-sm">{stage.label}</strong><span className={cn('rounded-full px-2 py-0.5 text-xs font-black',stage.tone)}>{leads.filter(l=>l.stage===stage.id).length}</span></div><div className="mt-2 grid gap-3">{leads.filter(l=>l.stage===stage.id).map(lead=><article key={lead.id} onClick={()=>onSelect(lead.id)} className={cn('cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md',selectedId===lead.id?'accent-border ring-2 ring-offset-1':'border-slate-200')}><div className="flex items-start justify-between gap-2"><strong className="text-sm">{lead.name}</strong><span className="text-xs font-black text-emerald-600">{lead.score}</span></div><p className="mt-2 text-sm font-semibold text-slate-700">{lead.intent}</p><p className="mt-1 text-xs text-slate-500">{lead.budget}</p><div className="mt-3 flex flex-wrap gap-1">{lead.tags.slice(0,2).map(tag=><span key={tag} className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{tag}</span>)}</div><div className="mt-4 grid grid-cols-2 gap-2"><button className="accent-button rounded-lg py-2 text-xs font-black" onClick={e=>{e.stopPropagation();onOpenChat(lead)}}>Abrir chat</button><button className="rounded-lg border border-slate-200 py-2 text-xs font-black hover:bg-slate-50" onClick={e=>{e.stopPropagation();onAdvance(lead)}}><ArrowRight size={13} className="inline" /> Avanzar</button></div></article>)}</div></div>)}</div>{selected&&<div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_auto]"><div><p className="accent-text text-xs font-black uppercase">Siguiente mejor acción</p><h3 className="mt-1 text-xl font-black">{selected.name}</h3><p className="mt-2 text-sm text-slate-600">{selected.nextAction}</p></div><button className="accent-button self-center rounded-xl px-4 py-3 text-sm font-black" onClick={()=>onOpenChat(selected)}><MessageCircle size={16} className="mr-2 inline" />Continuar conversación</button></div>}</section>
+  return <section className="mt-7 grid gap-5"><div className="flex gap-3 overflow-x-auto pb-2">{demo.stages.map(stage=><div key={stage.id} className="w-[270px] shrink-0 rounded-2xl border border-slate-200 bg-slate-100/60 p-3"><div className="flex items-center justify-between px-1 py-2"><strong className="text-sm">{stage.label}</strong><span className={cn('rounded-full px-2 py-0.5 text-xs font-black',stage.tone)}>{leads.filter(l=>l.stage===stage.id).length}</span></div><div className="mt-2 grid gap-3">{leads.filter(l=>l.stage===stage.id).map(lead=><article key={lead.id} onClick={()=>onSelect(lead.id)} className={cn('cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md',selectedId===lead.id?'accent-border ring-2 ring-offset-1':'border-slate-200')}><div className="flex items-start justify-between gap-2"><strong className="text-sm">{lead.name}</strong><span className="text-xs font-black text-emerald-600">{lead.score}</span></div><p className="mt-2 text-sm font-semibold text-slate-700">{lead.intent}</p><p className="mt-1 text-xs text-slate-500">{lead.budget}</p><div className="mt-3 flex flex-wrap gap-1">{lead.tags.slice(0,2).map(tag=><span key={tag} className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{tag}</span>)}</div><div className="mt-4 grid grid-cols-2 gap-2"><button className="accent-button rounded-lg py-2 text-xs font-black" onClick={e=>{e.stopPropagation();onOpenChat(lead)}}>Abrir chat</button>{demo.key==='autos'&&(lead.stage==='reserva'||lead.stage==='testdrive')&&onOpenClosingModal?<button className="rounded-lg bg-emerald-600 text-white py-2 text-xs font-black hover:bg-emerald-700 flex items-center justify-center gap-1 cursor-pointer" onClick={e=>{e.stopPropagation();onOpenClosingModal(lead)}}><FileCheck2 size={13}/> Cerrar</button>:<button className="rounded-lg border border-slate-200 py-2 text-xs font-black hover:bg-slate-50" onClick={e=>{e.stopPropagation();onAdvance(lead)}}><ArrowRight size={13} className="inline" /> Avanzar</button>}</div></article>)}</div></div>)}</div>{selected&&<div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_auto]"><div><p className="accent-text text-xs font-black uppercase">Siguiente mejor acción</p><h3 className="mt-1 text-xl font-black">{selected.name}</h3><p className="mt-2 text-sm text-slate-600">{selected.nextAction}</p></div><div className="flex flex-wrap items-center gap-2 self-center">{demo.key==='autos'&&onOpenClosingModal&&<button className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition cursor-pointer" onClick={()=>onOpenClosingModal(selected)}><FileCheck2 size={16}/>Cerrar venta</button>}<button className="accent-button rounded-xl px-4 py-3 text-sm font-black" onClick={()=>onOpenChat(selected)}><MessageCircle size={16} className="mr-2 inline" />Continuar conversación</button></div></div>}</section>
 }
 
 function Chats({
@@ -457,9 +527,11 @@ function Chats({
   onViewReceipt,
   onConfirmTransfer,
   onSimulateTransfer,
+  onOpenClosingModal,
+  onViewBoleto,
 }) {
   const related = demo.items.find(item=>item.id===selectedLead.itemId)
-  const [chatTab, setChatTab] = useState('profile') // 'profile', 'vehicle', 'finance'
+  const [chatTab, setChatTab] = useState('profile') // 'profile', 'vehicle', 'finance', 'closing'
 
   return <section className="mt-7 grid min-h-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[270px_minmax(0,1fr)_340px]">
     <aside className="border-b border-slate-200 p-3 lg:border-b-0 lg:border-r">
@@ -481,7 +553,7 @@ function Chats({
     </aside>
 
     <div className="grid min-w-0 grid-rows-[auto_1fr_auto] bg-[#f8fafc]">
-      <header className="border-b border-slate-200 bg-white p-4">
+      <header className="border-b border-slate-200 bg-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="accent-soft grid size-10 place-items-center rounded-full text-xs font-black">
             {selectedLead.name.split(' ').map(x=>x[0]).slice(0,2).join('')}
@@ -491,6 +563,17 @@ function Chats({
             <span className="text-xs text-slate-500">{selectedLead.source} · {selectedLead.phone}</span>
           </div>
         </div>
+
+        {demo.key === 'autos' && onOpenClosingModal && (
+          <button
+            type="button"
+            onClick={() => onOpenClosingModal(selectedLead)}
+            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-emerald-700 cursor-pointer"
+          >
+            <FileCheck2 size={14} />
+            <span>Cerrar Venta</span>
+          </button>
+        )}
       </header>
 
       <div className="flex flex-col gap-3 overflow-y-auto p-4">
@@ -564,6 +647,51 @@ function Chats({
               </div>
             )}
 
+            {m.saleBoleto && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-slate-800 shadow-xs">
+                <div className="flex items-center justify-between gap-2 border-b border-emerald-200/80 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="grid size-7 place-items-center rounded-lg bg-emerald-600 text-white font-black text-xs">
+                      <FileCheck2 size={14} />
+                    </span>
+                    <span className="text-xs font-black text-slate-900">
+                      Boleto de Compraventa {m.saleBoleto.id}
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800">
+                    {m.saleBoleto.status || 'Registrado'}
+                  </span>
+                </div>
+
+                <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-400">Total pactado</span>
+                    <strong className="text-sm font-black text-slate-900">{m.saleBoleto.amount}</strong>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-400">Vehículo</span>
+                    <span className="font-bold text-slate-700 truncate block">{m.saleBoleto.item}</span>
+                  </div>
+                </div>
+
+                <div className="mt-2 text-[11px] text-slate-600 font-medium">
+                  <span>Esquema: {m.saleBoleto.method}</span>
+                </div>
+
+                {onViewBoleto && (
+                  <div className="mt-2.5 flex justify-end border-t border-emerald-200/80 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => onViewBoleto(m.saleBoleto)}
+                      className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-black text-white hover:bg-emerald-700 transition cursor-pointer"
+                    >
+                      <Eye size={13} /> Ver Boleto Oficial
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <span className="block text-right text-[10px] opacity-50 mt-1">{m.time}</span>
           </div>
         ))}
@@ -627,7 +755,7 @@ function Chats({
               )}
             >
               <ShieldCheck size={13} />
-              Perfil 360°
+              Perfil
             </button>
             <button
               onClick={() => setChatTab('vehicle')}
@@ -637,7 +765,7 @@ function Chats({
               )}
             >
               <Car size={13} />
-              Vehículo
+              Auto
             </button>
             <button
               onClick={() => setChatTab('finance')}
@@ -649,14 +777,96 @@ function Chats({
               <Calculator size={13} />
               Cuotas
             </button>
+            <button
+              onClick={() => setChatTab('closing')}
+              className={cn(
+                'flex-1 rounded-lg py-1.5 transition flex items-center justify-center gap-1',
+                chatTab === 'closing' ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-700 hover:bg-emerald-50'
+              )}
+            >
+              <FileCheck2 size={13} />
+              Cierre
+            </button>
           </div>
 
           {chatTab === 'profile' && (
-            <AutoCustomerProfile lead={selectedLead} item={related} onInsertBrief={onDraft} />
+            <AutoCustomerProfile
+              lead={selectedLead}
+              item={related}
+              onInsertBrief={onDraft}
+              onCloseSale={onOpenClosingModal}
+            />
           )}
 
           {chatTab === 'finance' && (
             <AutoFinanceSimulator vehicle={related} onApplyDraft={onDraft} />
+          )}
+
+          {chatTab === 'closing' && (
+            <div className="rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50/50 to-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-xs font-black uppercase text-emerald-800">
+                  <FileCheck2 size={15} />
+                  Cierre de Operación
+                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800">
+                  Salón
+                </span>
+              </div>
+
+              <div className="mt-3 space-y-3 text-xs">
+                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">Unidad a Cerrar</span>
+                  <strong className="text-sm font-black text-slate-900 block mt-0.5">
+                    {related?.title || selectedLead.intent}
+                  </strong>
+                  <div className="mt-2 flex justify-between border-t border-slate-100 pt-2">
+                    <span className="text-slate-500">Valor de venta:</span>
+                    <strong className="text-blue-700 font-black">{related?.price || selectedLead.budget}</strong>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Cliente:</span>
+                    <strong className="text-slate-900">{selectedLead.name}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Etapa actual:</span>
+                    <span className="font-bold text-slate-800">{selectedLead.stage}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Seña registrada:</span>
+                    <strong className="text-emerald-700">
+                      {selectedLead.messages?.find((m) => m.transferReceipt)?.transferReceipt?.amount || 'Sin registrar'}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Permuta:</span>
+                    <span className="font-bold text-slate-800">
+                      {selectedLead.customerProfile?.tradeInCar?.brand !== 'No entrega usado'
+                        ? `${selectedLead.customerProfile?.tradeInCar?.brand} ${selectedLead.customerProfile?.tradeInCar?.model}`
+                        : 'No aplica'}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-[11px] leading-relaxed text-slate-600">
+                  Registrá el desglose del pago convenido (seña previa, tasación de usado, cuotas prendarias y saldo) para emitir el boleto oficial.
+                </p>
+
+                {onOpenClosingModal && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenClosingModal(selectedLead)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/25 hover:bg-emerald-700 transition cursor-pointer"
+                  >
+                    <FileCheck2 size={16} />
+                    <span>Abrir Cierre de Venta y Emitir Boleto</span>
+                  </button>
+                )}
+              </div>
+            </div>
           )}
 
           {chatTab === 'vehicle' && related && (
@@ -811,11 +1021,13 @@ function PriceLineChart({ compact = false, index = 0 }) {
   </svg>
 }
 
-function BusinessFinance({ demo }) {
+function BusinessFinance({ demo, sales }) {
   const [selectedSale, setSelectedSale] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState('2026-09')
   const finance = demo.finance
   if (!finance) return null
+
+  const salesList = sales || finance.sales
 
   const months = demo.months || [
     { id: '2026-09', label: 'Septiembre 2026 (En curso)', shortLabel: 'Septiembre 2026', isCurrent: true },
@@ -832,11 +1044,11 @@ function BusinessFinance({ demo }) {
   }, [finance, selectedMonth])
 
   const filteredSales = useMemo(() => {
-    if (selectedMonth === 'all') return finance.sales
-    return finance.sales.filter(
+    if (selectedMonth === 'all') return salesList
+    return salesList.filter(
       (s) => s.monthKey === selectedMonth || (!s.monthKey && selectedMonth === '2026-08')
     )
-  }, [finance.sales, selectedMonth])
+  }, [salesList, selectedMonth])
 
   const currentAgents = useMemo(() => {
     if (finance.monthlyAgents && finance.monthlyAgents[selectedMonth]) {

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../lib/helpers'
 
-export function AutoCustomerProfile({ lead, item, onInsertBrief }) {
+export function AutoCustomerProfile({ lead, item, onInsertBrief, onCloseSale }) {
   const profile = lead?.customerProfile
   if (!profile) return null
 
@@ -164,9 +164,20 @@ export function AutoCustomerProfile({ lead, item, onInsertBrief }) {
         {onInsertBrief && (
           <button
             onClick={() => onInsertBrief(profile.executiveBrief)}
-            className="mt-3 w-full rounded-lg bg-white/10 py-1.5 text-center text-xs font-bold text-white transition hover:bg-white/20"
+            className="mt-3 w-full rounded-lg bg-white/10 py-1.5 text-center text-xs font-bold text-white transition hover:bg-white/20 cursor-pointer"
           >
             Copiar resumen al chat
+          </button>
+        )}
+
+        {onCloseSale && (
+          <button
+            type="button"
+            onClick={() => onCloseSale(lead)}
+            className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-center text-xs font-black text-white shadow-md shadow-emerald-600/30 transition hover:bg-emerald-700 cursor-pointer"
+          >
+            <FileCheck2 size={14} />
+            <span>Cerrar Venta con este cliente</span>
           </button>
         )}
       </div>
