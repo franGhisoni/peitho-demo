@@ -14,8 +14,8 @@ import { AutoFinanceSimulator } from './components/AutoFinanceSimulator'
 import { AutoTestDriveView } from './components/AutoTestDriveView'
 import { AutoTransfersView } from './components/AutoTransfersView'
 import { AutoTransferReceiptModal } from './components/AutoTransferReceiptModal'
-import { AutoSaleClosingView } from './components/AutoSaleClosingView'
-import { AutoSaleClosingModal, OfficialBoletoView } from './components/AutoSaleClosingModal'
+import { AutoSaleClosingPanel } from './components/AutoSaleClosingPanel'
+import { OfficialBoletoView } from './components/AutoSaleClosingModal'
 
 const iconMap = { users: Users, stock: Boxes, trend: TrendingUp, alert: AlertTriangle, car: Car }
 
@@ -23,6 +23,7 @@ export function VerticalDemo({ type }) {
   const demo = verticalDemos[type]
   const [section, setSection] = useState('dashboard')
   const [leads, setLeads] = useState(demo.leads)
+  const [items, setItems] = useState(demo.items)
   const [transfers, setTransfers] = useState(demo.transfers || [])
   const [sales, setSales] = useState(demo.finance?.sales || [])
   const [activeReceipt, setActiveReceipt] = useState(null)
@@ -36,8 +37,8 @@ export function VerticalDemo({ type }) {
 
   const filteredItems = useMemo(() => {
     const value = query.trim().toLowerCase()
-    return value ? demo.items.filter((item) => `${item.title} ${item.ref} ${item.status}`.toLowerCase().includes(value)) : demo.items
-  }, [demo.items, query])
+    return value ? items.filter((item) => `${item.title} ${item.ref} ${item.status}`.toLowerCase().includes(value)) : items
+  }, [items, query])
 
   function navigate(next) {
     setSection(next)
@@ -47,6 +48,14 @@ export function VerticalDemo({ type }) {
   function openChat(lead) {
     setSelectedId(lead.id)
     navigate('chats')
+  }
+
+  function openClosingPanel(lead) {
+    if (lead) {
+      setSelectedId(lead.id)
+      setClosingLead(lead)
+    }
+    navigate('closing')
   }
 
   function advance(lead) {
@@ -127,9 +136,10 @@ export function VerticalDemo({ type }) {
   function handleConfirmSale(saleRecord) {
     setSales((prev) => [saleRecord, ...prev])
     const clientFirstName = saleRecord.buyer.split(' ')[0]
+    const deliveryDate = saleRecord.details?.delivery?.date || saleRecord.details?.deliveryDate || 'día pactado'
     const confirmationMessage = {
       from: 'agent',
-      text: `🎉 ¡Operación cerrada formalmente, ${clientFirstName}! Se emitió el Boleto Oficial de Compraventa N° ${saleRecord.id} por el ${saleRecord.item}. Monto total convenido: ${saleRecord.amount}. La unidad queda reservada para su entrega en nuestro salón el ${saleRecord.details?.deliveryDate || 'día pactado'}. ¡Muchas gracias por confiar en SI Motors!`,
+      text: `🎉 ¡Operación cerrada formalmente, ${clientFirstName}! Se emitió el Boleto Oficial de Compraventa N° ${saleRecord.id} por el ${saleRecord.item}. Monto total convenido: ${saleRecord.amount}. La unidad queda reservada para su entrega en nuestro salón el ${deliveryDate}. ¡Muchas gracias por confiar en SI Motors!`,
       time: 'Ahora',
       saleBoleto: saleRecord,
     }
@@ -146,6 +156,15 @@ export function VerticalDemo({ type }) {
           : l
       )
     )
+    if (saleRecord.details?.vehicleId) {
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === saleRecord.details.vehicleId
+            ? { ...item, status: 'Vendido · En entrega' }
+            : item
+        )
+      )
+    }
   }
 
   const nav = [
@@ -197,12 +216,13 @@ export function VerticalDemo({ type }) {
               onAdvance={advance}
               onOpenChat={openChat}
               onSelect={setSelectedId}
-              onOpenClosingModal={(lead) => setClosingLead(lead)}
+              onOpenClosingModal={openClosingPanel}
             />
           )}
           {section === 'chats' && (
             <Chats
               demo={demo}
+              items={items}
               draft={draft}
               leads={leads}
               selectedLead={selectedLead}
@@ -212,7 +232,7 @@ export function VerticalDemo({ type }) {
               onViewReceipt={setActiveReceipt}
               onConfirmTransfer={confirmTransfer}
               onSimulateTransfer={simulateClientTransfer}
-              onOpenClosingModal={(lead) => setClosingLead(lead)}
+              onOpenClosingModal={openClosingPanel}
               onViewBoleto={(sale) => setViewingBoleto(sale)}
             />
           )}
@@ -231,13 +251,14 @@ export function VerticalDemo({ type }) {
             />
           )}
           {section === 'closing' && type === 'autos' && (
-            <AutoSaleClosingView
+            <AutoSaleClosingPanel
               demo={demo}
               leads={leads}
+              items={items}
               sales={sales}
+              initialLeadId={closingLead?.id || selectedLead?.id}
+              onSaveSale={handleConfirmSale}
               onOpenChat={openChat}
-              onOpenClosingModal={(lead) => setClosingLead(lead)}
-              onViewBoleto={(sale) => setViewingBoleto(sale)}
             />
           )}
         </main>
@@ -247,14 +268,6 @@ export function VerticalDemo({ type }) {
           receipt={activeReceipt}
           onClose={() => setActiveReceipt(null)}
           onConfirm={confirmTransfer}
-        />
-      )}
-      {closingLead && (
-        <AutoSaleClosingModal
-          lead={closingLead}
-          demo={demo}
-          onClose={() => setClosingLead(null)}
-          onConfirmSale={handleConfirmSale}
         />
       )}
       {viewingBoleto && (
@@ -518,6 +531,7 @@ function Pipeline({ demo, leads, selectedId, onAdvance, onOpenChat, onSelect, on
 
 function Chats({
   demo,
+  items,
   draft,
   leads,
   selectedLead,
@@ -530,7 +544,7 @@ function Chats({
   onOpenClosingModal,
   onViewBoleto,
 }) {
-  const related = demo.items.find(item=>item.id===selectedLead.itemId)
+  const related = (items || demo.items).find((item) => item.id === selectedLead.itemId)
   const [chatTab, setChatTab] = useState('profile') // 'profile', 'vehicle', 'finance', 'closing'
 
   return <section className="mt-7 grid min-h-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[270px_minmax(0,1fr)_340px]">
