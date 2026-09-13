@@ -16,12 +16,15 @@ import { AutoTransfersView } from './components/AutoTransfersView'
 import { AutoTransferReceiptModal } from './components/AutoTransferReceiptModal'
 import { AutoSaleClosingPanel } from './components/AutoSaleClosingPanel'
 import { OfficialBoletoView } from './components/AutoSaleClosingModal'
+import { AutoSalespersonPortal } from './components/AutoSalespersonPortal'
 
 const iconMap = { users: Users, stock: Boxes, trend: TrendingUp, alert: AlertTriangle, car: Car }
 
 export function VerticalDemo({ type }) {
   const demo = verticalDemos[type]
-  const [section, setSection] = useState('dashboard')
+  const [userRole, setUserRole] = useState(type === 'autos' ? 'salesperson' : 'manager')
+  const isSalesperson = type === 'autos' && userRole === 'salesperson'
+  const [section, setSection] = useState(type === 'autos' ? 'agenda' : 'dashboard')
   const [leads, setLeads] = useState(demo.leads)
   const [items, setItems] = useState(demo.items)
   const [transfers, setTransfers] = useState(demo.transfers || [])
@@ -34,6 +37,176 @@ export function VerticalDemo({ type }) {
   const [draft, setDraft] = useState('')
   const [mobileMenu, setMobileMenu] = useState(false)
   const selectedLead = leads.find((lead) => lead.id === selectedId) || leads[0]
+
+  const [sellerAgenda, setSellerAgenda] = useState(() => [
+    {
+      id: 'ag-1',
+      leadId: 'auto-1',
+      client: 'Esteban Morales',
+      phone: '+54 9 11 4982-3310',
+      vehicle: 'Toyota Hilux SRX 4x4 AT',
+      time: 'Hoy · 15:30 hs',
+      type: 'testdrive',
+      status: 'Confirmado',
+      bay: 'Rampa 1 · Pista y Peritaje',
+      note: 'Cliente interesado en cierre con permuta de Ranger 2018. Trae libreta de service y duplicado de llave.',
+      licenseValid: true,
+      hasTradeIn: true,
+    },
+    {
+      id: 'ag-2',
+      leadId: 'auto-2',
+      client: 'Valeria Gómez',
+      phone: '+54 9 11 3192-8840',
+      vehicle: 'Toyota Corolla Cross SEG',
+      time: 'Mañana · 11:00 hs',
+      type: 'testdrive',
+      status: 'Confirmado',
+      bay: 'Salón Principal',
+      note: 'Prueba de manejo con su pareja. Busca verificar espacio de baúl e insonorización.',
+      licenseValid: true,
+      hasTradeIn: true,
+    },
+    {
+      id: 'ag-3',
+      leadId: 'auto-3',
+      client: 'Valeria Castro',
+      phone: '+54 9 11 6721-0099',
+      vehicle: 'Peugeot 208 Feline Tiptronic',
+      time: 'Hoy · 12:30 hs',
+      type: 'delivery',
+      status: 'Realizado',
+      bay: 'Bahía de Entregas 0km',
+      note: 'Entrega formal de unidad. Se firmó remito de conformidad y póliza de seguro de retiro.',
+      licenseValid: true,
+      hasTradeIn: false,
+    },
+    {
+      id: 'ag-4',
+      leadId: 'auto-4',
+      client: 'Martín Duhalde (AgroSur SRL)',
+      phone: '+54 9 11 5823-1100',
+      vehicle: 'Volkswagen Amarok V6 Extreme',
+      time: 'Sábado · 10:30 hs',
+      type: 'showroom',
+      status: 'Confirmado',
+      bay: 'Salón VIP Pickups',
+      note: 'Firma de poder para patentamiento y definición de accesorios (polarizado 3M y lona marítima).',
+      licenseValid: true,
+      hasTradeIn: false,
+    },
+  ])
+
+  const [sellerRequests, setSellerRequests] = useState(() => [
+    {
+      id: 'req-1',
+      kind: 'testdrive',
+      client: 'Agustín Pereyra',
+      phone: '+54 9 11 5590-1284',
+      vehicle: 'Peugeot 208 Feline Tiptronic',
+      requestedTime: 'Hoy · 18:00 hs',
+      source: 'Web Concesionario',
+      receivedAt: 'Hace 12 min',
+      budget: 'USD 17.500',
+      tradeInCar: null,
+      note: 'Quiero probar la caja automática Tiptronic y ver el espacio interior.',
+      status: 'Pendiente',
+    },
+    {
+      id: 'req-2',
+      kind: 'lead',
+      client: 'Mariano Ceballos',
+      phone: '+54 9 11 6321-4478',
+      vehicle: 'Volkswagen Amarok V6 Extreme',
+      requestedTime: null,
+      source: 'MercadoLibre Autos',
+      receivedAt: 'Hace 35 min',
+      budget: 'USD 50.000 contado',
+      tradeInCar: 'Hilux SRV 2019 (90.000 km)',
+      note: 'Consulta por disponibilidad inmediata en color Gris Indium y tomar mi Hilux en parte de pago.',
+      status: 'Pendiente',
+    },
+    {
+      id: 'req-3',
+      kind: 'testdrive',
+      client: 'Carlos Mendizábal',
+      phone: '+54 9 11 4872-9911',
+      vehicle: 'Toyota Hilux SRX 4x4 AT',
+      requestedTime: 'Mañana · 16:30 hs',
+      source: 'WhatsApp Entrante',
+      receivedAt: 'Hace 1 h',
+      budget: 'USD 42.000',
+      tradeInCar: 'Amarok Highline 2017',
+      note: 'Pide probar en ruta la tracción 4x4 y que le tasen su usada.',
+      status: 'Pendiente',
+    },
+  ])
+
+  function handleAcceptSellerRequest(reqId) {
+    const req = sellerRequests.find((r) => r.id === reqId)
+    if (!req) return
+    setSellerRequests((prev) => prev.map((r) => (r.id === reqId ? { ...r, status: 'Aceptado' } : r)))
+    if (req.kind === 'testdrive') {
+      const newAgendaItem = {
+        id: `ag-${Date.now()}`,
+        client: req.client,
+        phone: req.phone,
+        vehicle: req.vehicle,
+        time: req.requestedTime || 'Hoy · 18:00 hs',
+        type: 'testdrive',
+        status: 'Confirmado',
+        bay: 'Salón Principal / Pista',
+        note: req.note || 'Test Drive aceptado desde solicitudes entrantes',
+        licenseValid: true,
+        hasTradeIn: !!req.tradeInCar,
+      }
+      setSellerAgenda((prev) => [newAgendaItem, ...prev])
+    }
+    const leadExists = leads.some((l) => l.name === req.client)
+    if (!leadExists) {
+      const newLead = {
+        id: `auto-${Date.now()}`,
+        name: req.client,
+        phone: req.phone,
+        stage: req.kind === 'testdrive' ? 'testdrive' : 'calificado',
+        intent: req.vehicle,
+        budget: req.budget || 'A convenir',
+        score: 92,
+        source: req.source || 'Web Concesionario',
+        owner: 'Camila Rossi',
+        tags: [req.kind === 'testdrive' ? 'Test Drive agendado' : 'Lead asignado', 'Salón'],
+        nextAction: req.kind === 'testdrive' ? `Recibir para Test Drive de ${req.vehicle}` : `Contactar a ${req.client}`,
+        lastContact: 'Recién',
+        payment: 'A convenir',
+        customerProfile: {
+          fiscal: 'Consumidor Final',
+          employment: 'Actividad independiente / Profesional',
+          creditScore: 'Apto comercial',
+          urgency: 'Próximos 15 días',
+          tradeInCar: req.tradeInCar ? { brand: req.tradeInCar, model: '', year: '2019', peritajeStatus: 'Pendiente' } : null,
+          executiveBrief: req.note || 'Solicitud entrante aceptada por Camila Rossi.',
+        },
+        messages: [
+          { from: 'client', text: req.note || `Hola, me interesa el ${req.vehicle}.`, time: 'Recién' },
+          { from: 'agent', text: `¡Hola ${req.client.split(' ')[0]}! Soy Camila Rossi, tu asesora de SI Motors. ${req.kind === 'testdrive' ? `Tu turno para probar el ${req.vehicle} quedó confirmado. Te esperamos en nuestro salón.` : `Te escribo para asesorarte sobre el ${req.vehicle}. ¿Cómo preferís coordinar?`}`, time: 'Recién' },
+        ],
+      }
+      setLeads((prev) => [newLead, ...prev])
+      setSelectedId(newLead.id)
+    }
+  }
+
+  function handleRejectSellerRequest(reqId, reason) {
+    setSellerRequests((prev) => prev.map((r) => (r.id === reqId ? { ...r, status: 'Rechazado', rejectReason: reason } : r)))
+  }
+
+  function handleUpdateAgendaStatus(agendaId, newStatus) {
+    setSellerAgenda((prev) => prev.map((item) => (item.id === agendaId ? { ...item, status: newStatus } : item)))
+  }
+
+  function handleAddAgendaItem(newItem) {
+    setSellerAgenda((prev) => [newItem, ...prev])
+  }
 
   const filteredItems = useMemo(() => {
     const value = query.trim().toLowerCase()
@@ -167,45 +340,141 @@ export function VerticalDemo({ type }) {
     }
   }
 
-  const nav = [
-    ['dashboard', 'Dashboard', LayoutDashboard],
-    ['pipeline', demo.pipelineLabel, Users],
-    ['chats', 'Conversaciones', MessageCircle],
-    ['inventory', demo.itemLabel, type === 'relojes' ? Watch : type === 'autos' ? Car : Ticket],
-    ...(type === 'eventos' ? [
-      ['market', demo.marketLabel, CreditCard],
-      ['operations', 'Operación por evento', ClipboardList],
-    ] : []),
-    ...(type === 'relojes' ? [
-      ['market', demo.marketLabel, BarChart3],
-      ['finance', 'Finanzas', WalletCards],
-    ] : []),
-    ...(type === 'autos' ? [
-      ['testdrive', 'Test Drive & Peritaje', CalendarCheck],
-      ['transfers', 'Control de Transferencias', Receipt],
-      ['closing', 'Cierre de Venta', FileCheck2],
-      ['finance', 'Finanzas & Ventas', WalletCards],
-    ] : []),
-  ]
+  const nav = isSalesperson
+    ? [
+        ['agenda', 'Mi Agenda & Salón', CalendarCheck],
+        ['requests', 'Solicitudes Entrantes', Clock3],
+        ['pipeline', 'Mis Oportunidades', Users],
+        ['chats', 'Conversaciones', MessageCircle],
+        ['inventory', 'Stock de Salón', Car],
+        ['closing', 'Cierre de Venta', FileCheck2],
+        ['commissions', 'Mis Comisiones', CircleDollarSign],
+      ]
+    : [
+        ['dashboard', 'Dashboard Gerencial', LayoutDashboard],
+        ['pipeline', demo.pipelineLabel, Users],
+        ['chats', 'Conversaciones', MessageCircle],
+        ['inventory', demo.itemLabel, type === 'relojes' ? Watch : type === 'autos' ? Car : Ticket],
+        ...(type === 'eventos' ? [
+          ['market', demo.marketLabel, CreditCard],
+          ['operations', 'Operación por evento', ClipboardList],
+        ] : []),
+        ...(type === 'relojes' ? [
+          ['market', demo.marketLabel, BarChart3],
+          ['finance', 'Finanzas', WalletCards],
+        ] : []),
+        ...(type === 'autos' ? [
+          ['testdrive', 'Test Drive & Peritaje', CalendarCheck],
+          ['transfers', 'Control de Transferencias', Receipt],
+          ['closing', 'Cierre de Venta', FileCheck2],
+          ['finance', 'Finanzas & Ventas', WalletCards],
+        ] : []),
+      ]
 
   return (
     <div className={cn('vertical-demo min-h-screen bg-[#f6f7fb] text-slate-950', `theme-${demo.accent}`)}>
       <div className="grid min-h-screen grid-cols-[minmax(0,1fr)] lg:grid-cols-[258px_minmax(0,1fr)]">
-        <Sidebar demo={demo} mobileMenu={mobileMenu} nav={nav} section={section} onClose={() => setMobileMenu(false)} onNavigate={navigate} />
+        <Sidebar
+          demo={demo}
+          mobileMenu={mobileMenu}
+          nav={nav}
+          section={section}
+          isSalesperson={isSalesperson}
+          pendingRequestsCount={sellerRequests.filter((r) => r.status === 'Pendiente').length}
+          todayAgendaCount={sellerAgenda.filter((a) => (a.time || '').toLowerCase().includes('hoy')).length}
+          onClose={() => setMobileMenu(false)}
+          onNavigate={navigate}
+        />
         <main className="min-w-0 p-4 md:p-7 xl:p-9">
-          <header className="flex items-center justify-between gap-4">
+          <header className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white lg:hidden" onClick={() => setMobileMenu(true)}><Menu size={19} /></button>
               <div>
-                <p className="accent-text text-xs font-black uppercase tracking-[.16em]">{demo.eyebrow}</p>
+                <p className="accent-text text-xs font-black uppercase tracking-[.16em]">
+                  {isSalesperson ? 'Salón de Ventas · SI Motors' : demo.eyebrow}
+                </p>
                 <h1 className="mt-1 text-2xl font-black tracking-tight md:text-4xl">{nav.find(([id]) => id === section)?.[1]}</h1>
               </div>
             </div>
-            <div className="hidden items-center gap-3 rounded-full border border-slate-200 bg-white py-2 pl-2 pr-4 shadow-sm sm:flex">
-              <span className="accent-soft grid size-8 place-items-center rounded-full font-black text-xs">{demo.brand.startsWith('SI') ? 'SI' : demo.brand[0]}</span>
-              <div className="text-xs"><strong className="block">Demo activa</strong><span className="text-slate-500">Datos simulados</span></div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {type === 'autos' && (
+                <div className="flex items-center rounded-2xl border border-slate-200 bg-white p-1 shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserRole('salesperson')
+                      if (['dashboard', 'finance', 'transfers', 'testdrive'].includes(section)) {
+                        setSection('agenda')
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition cursor-pointer',
+                      userRole === 'salesperson'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    )}
+                  >
+                    <Car size={14} />
+                    <span>Vista Vendedora</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserRole('manager')
+                      if (['agenda', 'requests', 'commissions'].includes(section)) {
+                        setSection('dashboard')
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition cursor-pointer',
+                      userRole === 'manager'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    )}
+                  >
+                    <LayoutDashboard size={14} />
+                    <span>Vista Gerente</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="hidden items-center gap-3 rounded-full border border-slate-200 bg-white py-2 pl-2 pr-4 shadow-sm sm:flex">
+                <span className="accent-soft grid size-8 place-items-center rounded-full font-black text-xs">
+                  {isSalesperson ? 'CR' : demo.brand.startsWith('SI') ? 'SI' : demo.brand[0]}
+                </span>
+                <div className="text-xs">
+                  <strong className="block">
+                    {isSalesperson ? 'Camila Rossi' : 'Demo activa'}
+                  </strong>
+                  <span className="text-slate-500">
+                    {isSalesperson ? 'Asesora Oficial de Salón' : 'Datos simulados'}
+                  </span>
+                </div>
+              </div>
             </div>
           </header>
+
+          {/* Vistas exclusivas de Vendedora */}
+          {(section === 'agenda' || section === 'requests' || section === 'commissions') && type === 'autos' && (
+            <AutoSalespersonPortal
+              demo={demo}
+              leads={leads}
+              items={items}
+              sales={sales}
+              agenda={sellerAgenda}
+              requests={sellerRequests}
+              initialTab={section}
+              onAcceptRequest={handleAcceptSellerRequest}
+              onRejectRequest={handleRejectSellerRequest}
+              onUpdateAgendaStatus={handleUpdateAgendaStatus}
+              onAddAgendaItem={handleAddAgendaItem}
+              onOpenChat={openChat}
+              onOpenClosingPanel={openClosingPanel}
+              onNavigate={navigate}
+            />
+          )}
 
           {section === 'dashboard' && <Dashboard demo={demo} leads={leads} onNavigate={navigate} onOpenChat={openChat} />}
           {section === 'pipeline' && (
@@ -236,7 +505,15 @@ export function VerticalDemo({ type }) {
               onViewBoleto={(sale) => setViewingBoleto(sale)}
             />
           )}
-          {section === 'inventory' && <Inventory demo={demo} items={filteredItems} query={query} onQuery={setQuery} />}
+          {section === 'inventory' && (
+            <Inventory
+              demo={demo}
+              items={filteredItems}
+              query={query}
+              onQuery={setQuery}
+              isSalesperson={isSalesperson}
+            />
+          )}
           {section === 'market' && (type === 'relojes' ? <WatchMarket demo={demo} /> : <Payments demo={demo} leads={leads} />)}
           {section === 'operations' && type === 'eventos' && <EventsOperations demo={demo} leads={leads} />}
           {section === 'finance' && <BusinessFinance demo={demo} sales={sales} />}
@@ -281,7 +558,17 @@ export function VerticalDemo({ type }) {
   )
 }
 
-function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
+function Sidebar({
+  demo,
+  mobileMenu,
+  nav,
+  section,
+  isSalesperson,
+  pendingRequestsCount = 0,
+  todayAgendaCount = 0,
+  onClose,
+  onNavigate,
+}) {
   return (
     <>
       {mobileMenu && <button aria-label="Cerrar menú" className="fixed inset-0 z-30 bg-slate-950/35 lg:hidden" onClick={onClose} />}
@@ -289,10 +576,34 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
         <button className="absolute right-3 top-3 text-slate-400 lg:hidden" onClick={onClose}><X /></button>
         <div className="flex items-center gap-3">
           <div className="accent-bg grid size-11 place-items-center rounded-xl text-white shadow-lg">{demo.key === 'relojes' ? <Watch /> : demo.key === 'autos' ? <Car /> : <Ticket />}</div>
-          <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">{demo.key === 'autos' ? 'CRM Automotriz' : demo.key === 'relojes' ? 'CRM Luxury' : demo.key === 'eventos' ? 'Ticketing & CRM' : 'CRM'}</p><h2 className="font-black">{demo.brand}</h2></div>
+          <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">{isSalesperson ? 'Puesto de Salón' : demo.key === 'autos' ? 'CRM Automotriz' : demo.key === 'relojes' ? 'CRM Luxury' : demo.key === 'eventos' ? 'Ticketing & CRM' : 'CRM'}</p><h2 className="font-black">{demo.brand}</h2></div>
         </div>
         <nav className="mt-8 grid gap-1.5">
-          {nav.map(([id, label, Icon]) => <button key={id} className={cn('flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold transition', section === id ? 'accent-nav' : 'text-slate-400 hover:bg-white/5 hover:text-white')} onClick={() => onNavigate(id)}><Icon size={18} />{label}</button>)}
+          {nav.map(([id, label, Icon]) => (
+            <button
+              key={id}
+              className={cn(
+                'flex items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-bold transition cursor-pointer',
+                section === id ? 'accent-nav' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+              )}
+              onClick={() => onNavigate(id)}
+            >
+              <div className="flex items-center gap-3">
+                <Icon size={18} />
+                <span>{label}</span>
+              </div>
+              {id === 'requests' && pendingRequestsCount > 0 && (
+                <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black text-white animate-pulse">
+                  {pendingRequestsCount}
+                </span>
+              )}
+              {id === 'agenda' && todayAgendaCount > 0 && (
+                <span className="rounded-full bg-blue-500/30 px-2 py-0.5 text-[10px] font-black text-blue-300">
+                  {todayAgendaCount}
+                </span>
+              )}
+            </button>
+          ))}
         </nav>
         <div className="mt-auto rounded-2xl border border-white/10 bg-white/[.06] p-4">
           <div className="accent-text flex items-center gap-2 text-xs font-black uppercase"><Sparkles size={15} />Agente IA</div>
@@ -302,13 +613,43 @@ function Sidebar({ demo, mobileMenu, nav, section, onClose, onNavigate }) {
         {demo.key === 'eventos' && <a href="/eventos/app" className="mt-4 rounded-xl bg-violet-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-violet-700">Abrir app de control de acceso</a>}
         {demo.key === 'autos' && (
           <div className="mt-4 flex flex-col gap-2">
-            <button onClick={() => onNavigate('testdrive')} className="rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700 cursor-pointer">Ver agenda de Test Drive</button>
-            <button onClick={() => onNavigate('transfers')} className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-950/40 px-3 py-2 text-center text-xs font-bold text-blue-200 hover:bg-blue-900/60 transition cursor-pointer">
-              <Receipt size={14} /> Control de Transferencias
-            </button>
-            <button onClick={() => onNavigate('closing')} className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-center text-xs font-black text-white hover:bg-emerald-700 transition cursor-pointer">
-              <FileCheck2 size={14} /> Cierre de Venta
-            </button>
+            {isSalesperson ? (
+              <>
+                <button
+                  onClick={() => onNavigate('agenda')}
+                  className="rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700 cursor-pointer"
+                >
+                  Mi Agenda ({todayAgendaCount} hoy)
+                </button>
+                <button
+                  onClick={() => onNavigate('closing')}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-center text-xs font-black text-white hover:bg-emerald-700 transition cursor-pointer"
+                >
+                  <FileCheck2 size={14} /> Cerrar Venta Salón
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => onNavigate('testdrive')}
+                  className="rounded-xl bg-blue-600 px-3 py-2.5 text-center text-xs font-black text-white hover:bg-blue-700 cursor-pointer"
+                >
+                  Ver agenda de Test Drive
+                </button>
+                <button
+                  onClick={() => onNavigate('transfers')}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-950/40 px-3 py-2 text-center text-xs font-bold text-blue-200 hover:bg-blue-900/60 transition cursor-pointer"
+                >
+                  <Receipt size={14} /> Control de Transferencias
+                </button>
+                <button
+                  onClick={() => onNavigate('closing')}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-center text-xs font-black text-white hover:bg-emerald-700 transition cursor-pointer"
+                >
+                  <FileCheck2 size={14} /> Cierre de Venta
+                </button>
+              </>
+            )}
           </div>
         )}
       </aside>
@@ -938,12 +1279,20 @@ function SimilarSuggestions({ demo, related, onDraft }) {
   return <div className="mt-5 border-t border-slate-100 pt-4"><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{demo.key==='relojes'?'Relojes similares':demo.key==='autos'?'Alternativas de stock':'Eventos similares'}</p><div className="mt-2 grid gap-2">{suggestions.map(item=><button className="flex items-center gap-2 rounded-xl border border-slate-100 p-2 text-left hover:bg-slate-50" key={item.id} onClick={()=>onDraft(demo.key==='relojes'?`También puedo ofrecerte ${item.title} a ${item.price}; es una alternativa similar que tenemos disponible.`:demo.key==='autos'?`También tenemos disponible ${item.title} a ${item.price} en salón con entrega inmediata.`:`También puede interesarte ${item.title}, con entradas ${item.price} y ${item.stock} disponibles.`)}><img src={item.image} alt="" className="size-10 shrink-0 rounded-lg object-cover"/><span className="min-w-0 flex-1"><strong className="block truncate text-xs">{item.title}</strong><span className="block truncate text-[10px] text-slate-500">{item.price} · {item.stock}</span></span><ChevronRight size={14} className="shrink-0 text-slate-300"/></button>)}</div></div>
 }
 
-function Inventory({ demo, items, query, onQuery }) {
+function Inventory({ demo, items, query, onQuery, isSalesperson }) {
   return <section className="mt-7 grid gap-5">
     <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
       <div>
         <p className="accent-text text-xs font-black uppercase">Inventario conectado</p>
-        <h2 className="mt-1 text-xl font-black">{demo.key==='relojes'?'Stock, costo y posición de mercado':demo.key==='autos'?'Salón, stock aging y fichas técnicas':'Ventas y disponibilidad por evento'}</h2>
+        <h2 className="mt-1 text-xl font-black">
+          {demo.key === 'relojes'
+            ? 'Stock, costo y posición de mercado'
+            : demo.key === 'autos'
+            ? isSalesperson
+              ? 'Stock de Salón para Asesoramiento Comercial'
+              : 'Salón, stock aging y fichas técnicas'
+            : 'Ventas y disponibilidad por evento'}
+        </h2>
       </div>
       <div className="relative md:w-80">
         <Search className="absolute left-3 top-3.5 text-slate-400" size={16}/>
@@ -984,7 +1333,11 @@ function Inventory({ demo, items, query, onQuery }) {
                   <Info label="Tracción" value={item.specs?.traction}/>
                   <Info label="Garantía" value={item.specs?.warranty}/>
                   <Info label="Consultas · 7d" value={item.inquiries}/>
-                  <Info label="Margen est." value={item.margin}/>
+                  {isSalesperson ? (
+                    <Info label="Comisión Asesor" value="USD 450 (+ bono)" />
+                  ) : (
+                    <Info label="Margen est." value={item.margin}/>
+                  )}
                 </>
               ) : (
                 <>
